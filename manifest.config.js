@@ -1,37 +1,23 @@
-{
-  "manifest_version": 3,
-  "name": "Box Markdown Uploader",
-  "version": "1.0",
-  "description": "選択したテキストをMarkdownにしてBoxにアップロードします",
-  "permissions": [
-    "scripting",
-    "activeTab",
-    "storage",
-    "identity"
-  ],
-  "action": {
-    "default_popup": "popup.html"
+// manifest.config.js
+export default {
+  manifest_version: 3,
+  name: 'Box AI for Chrome',
+  version: '1.0',
+  description: 'A Chrome Extension that talks to Box API',
+  action: {
+    default_popup: 'src/popup.html',
+    default_icon: 'icon.png',
   },
-  "background": {
-    "service_worker": "background.js"
+  background: {
+    service_worker: 'src/background.js',
+    type: 'module'
   },
-  "oauth2": {
-    "client_id": "YOUR_CLIENT_ID",
-    "scopes": [
-      "item_upload"
-    ]
-  },
-  "host_permissions": [
-    "*://*/*"
-  ],
-  "content_scripts": [
+  content_scripts: [
     {
-      "matches": [
-        "*://*/*"
-      ],
-      "js": [
-        "box.js"
-      ]
+      matches: ['<all_urls>'],
+      js: ['src/content.js']
     }
-  ]
-}
+  ],
+  permissions: ['storage', 'identity', 'scripting', 'activeTab'],
+  host_permissions: ['https://*/*', 'http://*/*']
+};
