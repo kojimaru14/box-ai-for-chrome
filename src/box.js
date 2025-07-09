@@ -1,5 +1,7 @@
-const CLIENT_ID = '6ekdr4ktl9i9bv1imcf6hcn9blcg1ynz';
-const CLIENT_SECRET = 'dm8QFqppSLXXpHvcSJgUtudpvgzIIMUW';
+// const CLIENT_ID = '6ekdr4ktl9i9bv1imcf6hcn9blcg1ynz';
+// const CLIENT_SECRET = 'dm8QFqppSLXXpHvcSJgUtudpvgzIIMUW';
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
 const REDIRECT_URI = chrome.identity.getRedirectURL();
 
 async function getBoxAccessToken() {
@@ -151,6 +153,10 @@ async function uploadToBox(fileName, fileContent, folderId = "0") {
     if (response.status === 201) {
       const fileId = result.entries[0].id;
       const sharedLink = await createSharedLink(fileId, accessToken);
+      const defaultQuery = `This is an email thread of a support ticket about product of Box.com between a customer and a support agent at box.com.
+               I'd like to create a JIRA that reports the issue described in this ticket. Please draft the details that include description of the issue and the steps to reproduce".`;
+      const aiResponse = await askBoxAI(accessToken, fileId, defaultQuery);
+      console.log("AI Response:", aiResponse);
       await navigator.clipboard.writeText(sharedLink);
       alert("✅ アップロード＆共有リンク取得成功\nリンクをコピーしました！");
       return;
@@ -233,6 +239,11 @@ async function uploadBlobToBox(fileName, blob, folderId = "0") {
     if (response.status === 201) {
       const fileId = result.entries[0].id;
       const sharedLink = await createSharedLink(fileId, accessToken);
+      const defaultQuery = `This is an email thread of a support ticket about product of Box.com between a customer and a support agent at box.com.
+               I'd like to create a JIRA that reports the issue described in this ticket. Please draft the details that include description of the issue and the steps to reproduce".
+              `;
+      const aiResponse = await askBoxAI(accessToken, fileId, defaultQuery);
+      console.log("AI Response:", aiResponse);
       await navigator.clipboard.writeText(sharedLink);
       alert("✅ アップロード＆共有リンク取得成功\nリンクをコピーしました！");
       return;
@@ -244,4 +255,37 @@ async function uploadBlobToBox(fileName, blob, folderId = "0") {
   }
 
   throw new Error("最大リネーム回数を超えました。アップロードできませんでした。");
+}
+
+async function askBoxAI(boxAccessToken, fileId, query) {
+  try {
+    const response = await fetch(`https://api.box.com/2.0/ai/ask`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${boxAccessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "mode": "single_item_qa",
+        "prompt": `${query}`,
+        "items": [
+            {
+                "type": "file",
+                "id": `${fileId}`
+            }
+        ]
+    })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Box AI API request failed: ${response.statusText}`);
+    }
+
+    const jsonResponse = await response.json();
+    // console.log(jsonResponse);
+    return jsonResponse;
+
+  } catch (error) {
+    console.error('Error getting summary from Box AI API:', error);
+  }
 }

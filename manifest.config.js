@@ -16,7 +16,7 @@
     "service_worker": "background.js"
   },
   "oauth2": {
-    "client_id": "hpr3ho1gh1jir3ifsmqi6s6sz8uzxxia",
+    "client_id": "YOUR_CLIENT_ID",
     "scopes": [
       "item_upload"
     ]
