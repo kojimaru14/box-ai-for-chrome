@@ -1,0 +1,12 @@
+{
+  "name": "box-ai-for-chrome",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.2",
+    "vite": "^7.0.3"
+  }
+}
