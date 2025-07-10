@@ -1,5 +1,5 @@
 console.log("Jiko test");
-window.alert('アプリ開いたね！');
+// window.alert('アプリ開いたね！');
 
 // window.onload = function() {
 //   var body = document.getElementsByClassName('body-top');

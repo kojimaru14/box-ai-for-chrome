@@ -2,11 +2,17 @@
   "name": "box-ai-for-chrome",
   "version": "1.0.0",
   "scripts": {
-    "build": "vite build",
+    "vite-build": "vite build",
+    "prepare-extension": "node generate-config.js",
+    "build-extension": "npm run prepare-extension && npm run vite-build",
+    "watch": "vite build --watch",
     "dev": "vite"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.2",
     "vite": "^7.0.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.0"
   }
 }

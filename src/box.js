@@ -1,10 +1,18 @@
-// const CLIENT_ID = '6ekdr4ktl9i9bv1imcf6hcn9blcg1ynz';
-// const CLIENT_SECRET = 'dm8QFqppSLXXpHvcSJgUtudpvgzIIMUW';
-const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
-const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
-const REDIRECT_URI = chrome.identity.getRedirectURL();
+const CLIENT_ID = '6ekdr4ktl9i9bv1imcf6hcn9blcg1ynz';
+const CLIENT_SECRET = 'dm8QFqppSLXXpHvcSJgUtudpvgzIIMUW';
+// const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+// const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
+function isExtensionContextValid() {
+  return typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
+}
+
+const REDIRECT_URI = isExtensionContextValid() ? chrome.identity.getRedirectURL() : '';
 
 async function getBoxAccessToken() {
+  if (!isExtensionContextValid()) {
+    console.warn("Extension context invalidated. Cannot get Box access token.");
+    return null;
+  }
   const tokens = await loadTokens();
 
   if (tokens && Date.now() < tokens.expires_at) {
@@ -24,6 +32,11 @@ async function getBoxAccessToken() {
 
 function getAuthorizationCode() {
   return new Promise((resolve, reject) => {
+    if (!isExtensionContextValid()) {
+      console.warn("Extension context invalidated. Cannot get authorization code.");
+      reject(new Error("Extension context invalidated."));
+      return;
+    }
     const authUrl = `https://account.box.com/api/oauth2/authorize?` +
       `response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
 
@@ -85,6 +98,10 @@ async function refreshAccessToken(refreshToken) {
 }
 
 async function saveTokens(data) {
+  if (!isExtensionContextValid()) {
+    console.warn("Extension context invalidated. Cannot save tokens.");
+    return;
+  }
   const expiresAt = Date.now() + data.expires_in * 1000;
   await chrome.storage.local.set({
     box_tokens: {
@@ -97,6 +114,11 @@ async function saveTokens(data) {
 
 async function loadTokens() {
   return new Promise((resolve) => {
+    if (!isExtensionContextValid()) {
+      console.warn("Extension context invalidated. Cannot load tokens.");
+      resolve(null);
+      return;
+    }
     chrome.storage.local.get(['box_tokens'], (result) => {
       resolve(result.box_tokens);
     });
@@ -182,6 +204,10 @@ function renameFile(original, attempt) {
 }
 
 async function logoutBox() {
+  if (!isExtensionContextValid()) {
+    console.warn("Extension context invalidated. Cannot logout from Box.");
+    return;
+  }
   await chrome.storage.local.remove("box_tokens");
   console.log("🔓 Boxトークンを削除しました（ログアウト）");
 }
