@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Box Markdown Uploader",
+  "version": "1.0",
+  "description": "選択したテキストをMarkdownにしてBoxにアップロードします",
+  "permissions": [
+    "scripting",
+    "activeTab",
+    "storage",
+    "identity"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "options_page": "settings/options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "box.js"
+      ]
+    }
+  ]
+}

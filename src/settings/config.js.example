@@ -1,0 +1,2 @@
+export const BOX__CLIENT_ID = "YOUR_CLIENT_ID_HERE"; // Replace with your actual Box client ID
+export const BOX__CLIENT_SECRET = "YOUR_CLIENT_SECRET_HERE"; // Replace with your actual Box client secret

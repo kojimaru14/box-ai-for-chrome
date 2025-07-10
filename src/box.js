@@ -1,317 +1,118 @@
-const CLIENT_ID = '6ekdr4ktl9i9bv1imcf6hcn9blcg1ynz';
-const CLIENT_SECRET = 'dm8QFqppSLXXpHvcSJgUtudpvgzIIMUW';
-// const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
-// const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
-function isExtensionContextValid() {
-  return typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
-}
+class BOX {
+    #LOGHEADER = "[BOX]"; // Header for logging
+    #tokens = null; // Store tokens in a private field
 
-const REDIRECT_URI = isExtensionContextValid() ? chrome.identity.getRedirectURL() : '';
-
-async function getBoxAccessToken() {
-  if (!isExtensionContextValid()) {
-    console.warn("Extension context invalidated. Cannot get Box access token.");
-    return null;
-  }
-  const tokens = await loadTokens();
-
-  if (tokens && Date.now() < tokens.expires_at) {
-    return tokens.access_token; // 有効期限内
-  } else if (tokens && tokens.refresh_token) {
-    try {
-      return await refreshAccessToken(tokens.refresh_token);
-    } catch (e) {
-      console.warn("リフレッシュ失敗、再ログインします:", e);
+    constructor(config) {
+        this.initialize(config);
+        console.log(`${this.#LOGHEADER} Initializing...`);
     }
-  }
 
-  // 初回ログイン
-  const authCode = await getAuthorizationCode();
-  return await exchangeCodeForToken(authCode);
-}
-
-function getAuthorizationCode() {
-  return new Promise((resolve, reject) => {
-    if (!isExtensionContextValid()) {
-      console.warn("Extension context invalidated. Cannot get authorization code.");
-      reject(new Error("Extension context invalidated."));
-      return;
+    initialize(config) {   
+        if (!config || !config.BOX__CLIENT_ID || !config.BOX__CLIENT_SECRET) {
+            throw new Error(`${this.#LOGHEADER} Missing Box client ID or secret in config.`);
+        }
+        // this.#LOGHEADER = `${this.#LOGHEADER} [${config.BOX__CLIENT_ID}]`;
+        this.clientId = config.BOX__CLIENT_ID;
+        this.clientSecret = config.BOX__CLIENT_SECRET;
+        console.log(`${this.#LOGHEADER} Configuration initialized with client ID: ${this.clientId}`);
     }
-    const authUrl = `https://account.box.com/api/oauth2/authorize?` +
-      `response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-
-    chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, (redirectUri) => {
-      if (chrome.runtime.lastError || !redirectUri) {
-        reject(chrome.runtime.lastError || new Error("認証失敗"));
-        return;
-      }
-
-      const url = new URL(redirectUri);
-      const code = url.searchParams.get('code');
-      if (!code) return reject(new Error("codeが見つかりません"));
-      resolve(code);
-    });
-  });
-}
-
-async function exchangeCodeForToken(code) {
-  const body = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code,
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    redirect_uri: REDIRECT_URI
-  });
-
-  const res = await fetch("https://api.box.com/oauth2/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body
-  });
-
-  if (!res.ok) throw new Error(await res.text());
-  const data = await res.json();
-
-  await saveTokens(data);
-  return data.access_token;
-}
-
-async function refreshAccessToken(refreshToken) {
-  const body = new URLSearchParams({
-    grant_type: 'refresh_token',
-    refresh_token: refreshToken,
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET
-  });
-
-  const res = await fetch("https://api.box.com/oauth2/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body
-  });
-
-  if (!res.ok) throw new Error(await res.text());
-  const data = await res.json();
-
-  await saveTokens(data);
-  return data.access_token;
-}
-
-async function saveTokens(data) {
-  if (!isExtensionContextValid()) {
-    console.warn("Extension context invalidated. Cannot save tokens.");
-    return;
-  }
-  const expiresAt = Date.now() + data.expires_in * 1000;
-  await chrome.storage.local.set({
-    box_tokens: {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at: expiresAt
+    
+    get LOG() {
+        return this.#LOGHEADER;
     }
-  });
-}
 
-async function loadTokens() {
-  return new Promise((resolve) => {
-    if (!isExtensionContextValid()) {
-      console.warn("Extension context invalidated. Cannot load tokens.");
-      resolve(null);
-      return;
+    async getTokensAuthorizationCodeGrant(code, clientId, clientSecret, redirectUri) {
+        const response = await fetch('https://api.box.com/oauth2/token', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: new URLSearchParams({
+                grant_type: 'authorization_code',
+                code: code,
+                client_id: clientId,
+                client_secret: clientSecret,
+                redirect_uri: redirectUri,
+            })
+        });
+        const tokenData = await response.json();
+        this.saveTokens(tokenData);
     }
-    chrome.storage.local.get(['box_tokens'], (result) => {
-      resolve(result.box_tokens);
-    });
-  });
-}
 
-
-// async function uploadToBox(file, accessToken) {
-//   const formData = new FormData();
-//   formData.append('attributes', JSON.stringify({ name: file.name, parent: { id: "0" } }));
-//   formData.append('file', file);
-
-//   const response = await fetch('https://upload.box.com/api/2.0/files/content', {
-//     method: 'POST',
-//     headers: {
-//       Authorization: `Bearer ${accessToken}`
-//     },
-//     body: formData
-//   });
-
-//   if (!response.ok) {
-//     const errText = await response.text();
-//     throw new Error(`Boxアップロードエラー: ${errText}`);
-//   }
-// }
-
-// ...（前半は前回のトークン管理のまま）
-async function uploadToBox(fileName, fileContent, folderId = "0") {
-  const accessToken = await getBoxAccessToken();
-  const file = new Blob([fileContent], { type: "text/markdown" });
-
-  let attempt = 0;
-  const maxAttempts = 5;
-
-  while (attempt < maxAttempts) {
-    const name = attempt === 0 ? fileName : renameFile(fileName, attempt);
-    const formData = new FormData();
-    formData.append("attributes", JSON.stringify({
-      name,
-      parent: { id: folderId }
-    }));
-    formData.append("file", file);
-
-    const response = await fetch("https://upload.box.com/api/2.0/files/content", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      },
-      body: formData
-    });
-
-    const result = await response.json();
-
-    if (response.status === 201) {
-      const fileId = result.entries[0].id;
-      const sharedLink = await createSharedLink(fileId, accessToken);
-      const defaultQuery = `This is an email thread of a support ticket about product of Box.com between a customer and a support agent at box.com.
-               I'd like to create a JIRA that reports the issue described in this ticket. Please draft the details that include description of the issue and the steps to reproduce".`;
-      const aiResponse = await askBoxAI(accessToken, fileId, defaultQuery);
-      console.log("AI Response:", aiResponse);
-      await navigator.clipboard.writeText(sharedLink);
-      alert("✅ アップロード＆共有リンク取得成功\nリンクをコピーしました！");
-      return;
-    } else if (response.status === 409) {
-      attempt++;
-    } else {
-      throw new Error("アップロード失敗: " + await response.text());
-    }
-  }
-
-  throw new Error("最大リネーム回数を超えました。アップロードできませんでした。");
-}
-
-
-function renameFile(original, attempt) {
-  const extIndex = original.lastIndexOf(".");
-  if (extIndex === -1) {
-    return `${original} (${attempt})`;
-  }
-  const base = original.slice(0, extIndex);
-  const ext = original.slice(extIndex);
-  return `${base} (${attempt})${ext}`;
-}
-
-async function logoutBox() {
-  if (!isExtensionContextValid()) {
-    console.warn("Extension context invalidated. Cannot logout from Box.");
-    return;
-  }
-  await chrome.storage.local.remove("box_tokens");
-  console.log("🔓 Boxトークンを削除しました（ログアウト）");
-}
-
-
-async function createSharedLink(fileId, accessToken) {
-  const response = await fetch(`https://api.box.com/2.0/files/${fileId}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      shared_link: { access: "open" }
-    })
-  });
-
-  const data = await response.json();
-  return data.shared_link.url;
-}
-
-async function getBoxFolders(parentId = "0") {
-  const accessToken = await getBoxAccessToken();
-  const res = await fetch(`https://api.box.com/2.0/folders/${parentId}/items`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-  const data = await res.json();
-  return data.entries.filter(item => item.type === "folder");
-}
-
-async function uploadBlobToBox(fileName, blob, folderId = "0") {
-  const accessToken = await getBoxAccessToken();
-  let attempt = 0;
-  const maxAttempts = 5;
-
-  while (attempt < maxAttempts) {
-    const name = attempt === 0 ? fileName : renameFile(fileName, attempt);
-    const formData = new FormData();
-    formData.append("attributes", JSON.stringify({
-      name: fileName,
-      parent: { id: folderId }
-    }));
-    formData.append("file", blob);
-
-    const response = await fetch("https://upload.box.com/api/2.0/files/content", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      },
-      body: formData
-    });
-
-    const result = await response.json();
-
-    if (response.status === 201) {
-      const fileId = result.entries[0].id;
-      const sharedLink = await createSharedLink(fileId, accessToken);
-      const defaultQuery = `This is an email thread of a support ticket about product of Box.com between a customer and a support agent at box.com.
-               I'd like to create a JIRA that reports the issue described in this ticket. Please draft the details that include description of the issue and the steps to reproduce".
-              `;
-      const aiResponse = await askBoxAI(accessToken, fileId, defaultQuery);
-      console.log("AI Response:", aiResponse);
-      await navigator.clipboard.writeText(sharedLink);
-      alert("✅ アップロード＆共有リンク取得成功\nリンクをコピーしました！");
-      return;
-    } else if (response.status === 409) {
-      attempt++;
-    } else {
-      throw new Error("アップロード失敗: " + await response.text());
-    }
-  }
-
-  throw new Error("最大リネーム回数を超えました。アップロードできませんでした。");
-}
-
-async function askBoxAI(boxAccessToken, fileId, query) {
-  try {
-    const response = await fetch(`https://api.box.com/2.0/ai/ask`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${boxAccessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "mode": "single_item_qa",
-        "prompt": `${query}`,
-        "items": [
-            {
-                "type": "file",
-                "id": `${fileId}`
+    async getBoxAccessToken() {
+        const { BOX__CREDENTIALS: tokens }  = await chrome.storage.local.get("BOX__CREDENTIALS");
+        this.tokens = tokens;
+        if (tokens && Date.now() < tokens.expires_at) {
+            return tokens.access_token; // Within valid period
+        } else if (tokens && tokens.refresh_token) {
+            try {
+                return await this.refreshAccessToken(tokens.refresh_token);
+            } catch (e) {
+                console.warn("Token refresh failed. You need to re-authorize the app via Options page:", e);
             }
-        ]
-    })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Box AI API request failed: ${response.statusText}`);
+        }
     }
 
-    const jsonResponse = await response.json();
-    // console.log(jsonResponse);
-    return jsonResponse;
+    async refreshAccessToken(refreshToken) {
+        const { BOX__CLIENT_ID, BOX__CLIENT_SECRET } = await chrome.storage.local.get(['BOX__CLIENT_ID', 'BOX__CLIENT_SECRET']);
+        const body = new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+            client_id: BOX__CLIENT_ID,
+            client_secret: BOX__CLIENT_SECRET
+        });
 
-  } catch (error) {
-    console.error('Error getting summary from Box AI API:', error);
-  }
+        const res = await fetch("https://api.box.com/oauth2/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+
+        await this.saveTokens(data);
+        return data.access_token;
+    }
+
+    async saveTokens(tokenData) {
+        this.tokens = {
+                access_token: tokenData.access_token,
+                refresh_token: tokenData.refresh_token,
+                expires_at: tokenData.expires_in ? Date.now() + tokenData.expires_in * 1000 : null
+            }
+        await chrome.storage.local.set({
+            ["BOX__CREDENTIALS"]: this.tokens
+        });
+    }
+
+    async getUser(userId="me") {
+        console.log(`${this.LOG} Tokens user:`, this.tokens);
+        const res = await fetch(`https://api.box.com/2.0/users/${userId}`, {
+            headers: { Authorization: `Bearer ${this.tokens.access_token}` }
+        });
+        const json = await res.json();
+        return json;
+    }
+
+    async askBoxAI(boxAccessToken, fileId, query) {
+        const response = await fetch(`https://api.box.com/2.0/ai/ask`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${boxAccessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "mode": "single_item_qa",
+                "prompt": `${query}`,
+                "items": [
+                    {
+                        "type": "file",
+                        "id": `${fileId}`
+                    }
+                ]
+            })
+        });
+        return response.json();
+    }
 }
+
+export default BOX;
