@@ -1,32 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "Box Markdown Uploader",
+  "name": "Box AI for Chrome",
   "version": "1.0",
   "description": "選択したテキストをMarkdownにしてBoxにアップロードします",
   "permissions": [
-    "scripting",
-    "activeTab",
     "storage",
-    "identity"
+    "identity",
+    "contextMenus",
+    "activeTab",
+    "scripting",
+    "clipboardWrite"
   ],
   "action": {
     "default_popup": "popup/popup.html"
   },
   "options_page": "settings/options.html",
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "host_permissions": [
     "*://*/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "*://*/*"
-      ],
-      "js": [
-        "box.js"
-      ]
-    }
   ]
 }

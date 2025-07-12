@@ -11,7 +11,6 @@ class BOX {
         if (!config || !config.BOX__CLIENT_ID || !config.BOX__CLIENT_SECRET) {
             throw new Error(`${this.#LOGHEADER} Missing Box client ID or secret in config.`);
         }
-        // this.#LOGHEADER = `${this.#LOGHEADER} [${config.BOX__CLIENT_ID}]`;
         this.clientId = config.BOX__CLIENT_ID;
         this.clientSecret = config.BOX__CLIENT_SECRET;
         console.log(`${this.#LOGHEADER} Configuration initialized with client ID: ${this.clientId}`);
