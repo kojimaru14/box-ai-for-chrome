@@ -1,6 +1,6 @@
 class BOX {
     #LOGHEADER = "[BOX]"; // Header for logging
-    #tokens = null; // Store tokens in a private field
+    tokens = null; // Store tokens in a private field
 
     constructor(config) {
         this.initialize(config);
@@ -51,12 +51,12 @@ class BOX {
     }
 
     async refreshAccessToken(refreshToken) {
-        const { BOX__CLIENT_ID, BOX__CLIENT_SECRET } = await chrome.storage.local.get(['BOX__CLIENT_ID', 'BOX__CLIENT_SECRET']);
+        // const { BOX__CLIENT_ID, BOX__CLIENT_SECRET } = await chrome.storage.local.get(['BOX__CLIENT_ID', 'BOX__CLIENT_SECRET']);
         const body = new URLSearchParams({
             grant_type: 'refresh_token',
             refresh_token: refreshToken,
-            client_id: BOX__CLIENT_ID,
-            client_secret: BOX__CLIENT_SECRET
+            client_id: this.clientId,
+            client_secret: this.clientSecret
         });
 
         const res = await fetch("https://api.box.com/oauth2/token", {
