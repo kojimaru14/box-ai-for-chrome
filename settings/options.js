@@ -1,5 +1,6 @@
 import { BOX__CLIENT_ID, BOX__CLIENT_SECRET } from './config.js';
 import BOX from '../box.js';
+import './box-ui-elements/picker.js';
 
 const boxClient = new BOX({ BOX__CLIENT_ID, BOX__CLIENT_SECRET });
 const { FolderPicker } = Box;
@@ -63,7 +64,8 @@ folderPicker.show("0", await boxClient.getBoxAccessToken(), {
     chooseButtonLabel: 'Select',
     cancelButtonLabel: 'Cancel',
     modal: {
-        buttonLabel: 'Folder Picker'
+        buttonLabel: 'Folder Picker',
+        buttonClassName: ''
     }
 });
 
