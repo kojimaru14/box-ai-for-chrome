@@ -110,7 +110,7 @@ function renderInstructionsTable(items) {
 }
 
 /** Truncate a string to a maximum length, adding an ellipsis if needed */
-function truncateText(str, maxChars = 200) {
+function truncateText(str, maxChars = 170) {
   if (typeof str !== 'string') return str;
   return str.length > maxChars ? str.slice(0, maxChars) + '…' : str;
 }
