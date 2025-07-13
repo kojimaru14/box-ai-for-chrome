@@ -29,7 +29,7 @@ folderPicker.addListener('choose', function(items) {
     const folder = items[0];
     document.getElementById('selected-folder').textContent =
         `Selected Folder: ${folder.name} (ID: ${folder.id})`;
-    chrome.storage.local.set({ defaultFolder: { id: folder.id, name: folder.name } });
+    chrome.storage.local.set({ BOX__DESTINATION_FOLDER_ID: { id: folder.id, name: folder.name } });
 });
 
 (async () => {
@@ -43,14 +43,14 @@ folderPicker.addListener('choose', function(items) {
             console.error(e);
         }
     }
-    const { defaultFolder } = await chrome.storage.local.get('defaultFolder');
-    if (defaultFolder) {
-        if (typeof defaultFolder === 'string') {
+    const { BOX__DESTINATION_FOLDER_ID: destinationFolder } = await chrome.storage.local.get('BOX__DESTINATION_FOLDER_ID');
+    if (destinationFolder) {
+        if (typeof destinationFolder === 'string') {
             document.getElementById('selected-folder').textContent =
-                `Selected Folder ID: ${defaultFolder}`;
+                `Selected Folder ID: ${destinationFolder}`;
         } else {
             document.getElementById('selected-folder').textContent =
-                `Selected Folder: ${defaultFolder.name} (ID: ${defaultFolder.id})`;
+                `Selected Folder: ${destinationFolder.name} (ID: ${destinationFolder.id})`;
         }
     }
 })();

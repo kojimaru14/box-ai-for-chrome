@@ -139,8 +139,8 @@ async function handleBoxAIDraftJira(fileName, text, tab) {
 
     showBannerInTab(tab.id, "Uploading file to Box...", "info");
     const form = new FormData();
-    const { BOX__DESTINATION_FOLDER_ID } = await chrome.storage.local.get('BOX__DESTINATION_FOLDER_ID');
-    form.append('attributes', JSON.stringify({ name: fileName, parent: { id: BOX__DESTINATION_FOLDER_ID || '0' } }));
+    const { BOX__DESTINATION_FOLDER_ID: destinationFolder } = await chrome.storage.local.get('BOX__DESTINATION_FOLDER_ID');
+    form.append('attributes', JSON.stringify({ name: fileName, parent: { id: destinationFolder.id || '0' } }));
     form.append('file', new Blob([text], { type: 'text/markdown' }), fileName);
     const uploadRes = await fetch('https://upload.box.com/api/2.0/files/content', {
         method: 'POST',
