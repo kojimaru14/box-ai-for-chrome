@@ -42,14 +42,6 @@ Labels: bug, support, customer_reported, [any additional labels]
 Linked Support Ticket: [Insert ticket link or ID]
 `;
 
-chrome.runtime.onInstalled.addListener(() => {
-    chrome.contextMenus.create({
-        id: 'ASK_BOX_AI_DRAFT_JIRA',
-        title: 'Ask Box AI to draft a JIRA',
-        contexts: ['selection'],
-        // documentUrlPatterns: ['*://*.zendesk.com/*']
-    });
-});
 
 /**
  * Helper function to display a banner in a specific tab.
@@ -75,9 +67,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId !== 'ASK_BOX_AI_DRAFT_JIRA' || !info.selectionText) return;
+    if (!info.menuItemId || !info.selectionText) return;
     const finalFileName = sanitizeFilename(`${tab.title}_${Date.now()}.md`);
-    handleBoxAIDraftJira(finalFileName, info.selectionText, tab);
+    chrome.storage.local.get({ BOX__CUSTOM_INSTRUCTIONS: [] }, result => {
+        const items = result.BOX__CUSTOM_INSTRUCTIONS;
+        const customItem = items.find(i => i.id === info.menuItemId);
+        if (customItem) {
+            handleBoxAIQuery(finalFileName, info.selectionText, customItem.instruction, tab);
+        } else if (info.menuItemId === 'ASK_BOX_AI_DRAFT_JIRA') {
+            handleBoxAIDraftJira(finalFileName, info.selectionText, tab);
+        }
+    });
 });
 
 function sanitizeFilename(input) {
@@ -114,7 +114,10 @@ async function askBoxAI(fileId, query, tab) {
     }
 }
 
-async function handleBoxAIDraftJira(fileName, text, tab) {
+/**
+ * Generic handler for Box AI requests with a custom instruction query.
+ */
+async function handleBoxAIQuery(fileName, text, instructionQuery, tab) {
     showBannerInTab(tab.id, "Getting Box access token...", "info");
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
@@ -135,17 +138,54 @@ async function handleBoxAIDraftJira(fileName, text, tab) {
     }
     console.log('Box upload complete, file ID:', fileId);
     showBannerInTab(tab.id, "File uploaded to Box, asking Box AI...", "info");
-    const response = await askBoxAI(fileId, aiQuery, tab);
+    const response = await askBoxAI(fileId, instructionQuery, tab);
     if (!response) {
         showBannerInTab(tab.id, "Failed to get response from Box AI.", "error");
         return console.error('Failed to get response from Box AI', response);
     }
     console.log('Box AI response:', response);
     chrome.scripting.executeScript({
-        target: { tabId: tab.id }, // Target the current active tab
-        function: copyTextToClipboard, // The function to inject and execute
-        args: [response.answer || response.text || "No answer provided by Box AI."] // Pass the selected text as an argument to the function
+        target: { tabId: tab.id },
+        function: copyTextToClipboard,
+        args: [response.answer || response.text || "No answer provided by Box AI."]
     });
+}
+
+/**
+ * Initialize context menu items based on stored custom instructions.
+ */
+async function initializeContextMenus() {
+    await chrome.contextMenus.removeAll();
+    const { BOX__CUSTOM_INSTRUCTIONS: customInstructions = [] } = await chrome.storage.local.get('BOX__CUSTOM_INSTRUCTIONS');
+    if (customInstructions.length === 0) {
+        chrome.contextMenus.create({
+            id: 'ASK_BOX_AI_DRAFT_JIRA',
+            title: 'Ask Box AI to draft a JIRA',
+            contexts: ['selection'],
+        });
+    } else {
+        customInstructions
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .forEach(item => {
+                chrome.contextMenus.create({
+                    id: item.id,
+                    title: item.title,
+                    contexts: ['selection'],
+                });
+            });
+    }
+}
+
+// Initialize on startup and when custom instructions change
+initializeContextMenus();
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.BOX__CUSTOM_INSTRUCTIONS) {
+        initializeContextMenus();
+    }
+});
+
+async function handleBoxAIDraftJira(fileName, text, tab) {
+    return handleBoxAIQuery(fileName, text, aiQuery, tab);
 }
 
 /**

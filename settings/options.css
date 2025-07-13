@@ -64,3 +64,37 @@ button:hover {
 #folder-picker-container {
     margin-top: 20px;
 }
+
+#custom-instructions-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+#custom-instructions-table th,
+#custom-instructions-table td {
+  border: 1px solid #dddfe2;
+  padding: 8px;
+}
+
+#custom-instructions-table th {
+  background-color: #f5f6f7;
+  text-align: left;
+}
+
+#custom-instructions-table textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+#custom-instructions-table input[type="text"],
+#custom-instructions-table input[type="number"] {
+  width: 100%;
+}
+
+#add-instruction,
+#save-instructions {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: auto;
+}
