@@ -77,7 +77,8 @@ button:hover {
   border-bottom: 1px solid #e0e0e0;
   text-align: left;
   padding: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 14px;
   color: #333;
 }
 
@@ -123,8 +124,8 @@ button:hover {
 .table-actions button {
   margin-right: 8px;
   width: auto;
-  font-size: 14px;
-  padding: 6px 12px;
+  font-size: 16px;
+  padding: 12px 20px;
 }
 .table-actions button:last-child {
   margin-right: 0;
@@ -136,7 +137,7 @@ button:hover {
 }
 #custom-instructions-table td:last-child button {
   width: auto;
-  font-size: 14px;
+  font-size: 13px;
   padding: 4px 8px;
   margin-right: 6px;
 }
@@ -190,6 +191,7 @@ button:hover {
   margin-top: 4px;
   padding: 8px;
   font-size: 14px;
+  font-family: inherit;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
