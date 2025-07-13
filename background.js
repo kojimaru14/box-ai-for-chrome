@@ -1,9 +1,7 @@
 import BOX from './box.js';
-import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, aiQuery } from './settings/config.js';
+import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from './settings/config.js';
 
 const boxClient = new BOX( { BOX__CLIENT_ID, BOX__CLIENT_SECRET });
-
-
 
 /**
  * Helper function to display a banner in a specific tab.
@@ -32,12 +30,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (!info.menuItemId || !info.selectionText) return;
     const finalFileName = sanitizeFilename(`${tab.title}_${Date.now()}.md`);
     chrome.storage.local.get({ BOX__CUSTOM_INSTRUCTIONS: [] }, result => {
-        const items = result.BOX__CUSTOM_INSTRUCTIONS;
-        const customItem = items.find(i => i.id === info.menuItemId);
-        if (customItem) {
-            handleBoxAIQuery(finalFileName, info.selectionText, customItem.instruction, tab);
-        } else if (info.menuItemId === 'ASK_BOX_AI_DRAFT_JIRA') {
-            handleBoxAIDraftJira(finalFileName, info.selectionText, tab);
+        const stored = result.BOX__CUSTOM_INSTRUCTIONS;
+        const item =
+            stored.find(i => i.id === info.menuItemId) ||
+            defaultCustomInstructions.find(i => i.id === info.menuItemId);
+        if (item) {
+            handleBoxAIQuery(finalFileName, info.selectionText, item.instruction, tab);
         }
     });
 });
@@ -118,24 +116,17 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, tab) {
  */
 async function initializeContextMenus() {
     await chrome.contextMenus.removeAll();
-    const { BOX__CUSTOM_INSTRUCTIONS: customInstructions = [] } = await chrome.storage.local.get('BOX__CUSTOM_INSTRUCTIONS');
-    if (customInstructions.length === 0) {
-        chrome.contextMenus.create({
-            id: 'ASK_BOX_AI_DRAFT_JIRA',
-            title: 'Ask Box AI to draft a JIRA',
-            contexts: ['selection'],
-        });
-    } else {
-        customInstructions
-            .sort((a, b) => a.sortOrder - b.sortOrder)
-            .forEach(item => {
-                chrome.contextMenus.create({
-                    id: item.id,
-                    title: item.title,
-                    contexts: ['selection'],
-                });
+    const { BOX__CUSTOM_INSTRUCTIONS: stored = [] } = await chrome.storage.local.get('BOX__CUSTOM_INSTRUCTIONS');
+    const instructions = stored.length > 0 ? stored : defaultCustomInstructions;
+    instructions
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .forEach(item => {
+            chrome.contextMenus.create({
+                id: item.id,
+                title: item.title,
+                contexts: ['selection'],
             });
-    }
+        });
 }
 
 // Initialize on startup and when custom instructions change
@@ -145,10 +136,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
         initializeContextMenus();
     }
 });
-
-async function handleBoxAIDraftJira(fileName, text, tab) {
-    return handleBoxAIQuery(fileName, text, aiQuery, tab);
-}
 
 /**
  * This function is executed as a content script in the context of the webpage.
@@ -188,16 +175,16 @@ function copyTextToClipboard(textToCopy) {
         if (success) {
             console.log('Text successfully copied by content script.');
             // Send message to background script for success banner
-            chrome.runtime.sendMessage({ type: "displayBanner", message: "JIRA draft copied to clipboard!", bannerType: "success" });
+            chrome.runtime.sendMessage({ type: "displayBanner", message: "Box AI response copied to clipboard!", bannerType: "success" });
         } else {
             console.error('Failed to execute copy command.');
             // Send message to background script for error banner
-            chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy JIRA draft to clipboard!", bannerType: "error" });
+            chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy Box AI response to clipboard!", bannerType: "error" });
         }
     } catch (err) {
         console.error('Error copying text:', err);
         // Send message to background script for error banner
-        chrome.runtime.sendMessage({ type: "displayBanner", message: "Error copying JIRA draft to clipboard!", bannerType: "error" });
+        chrome.runtime.sendMessage({ type: "displayBanner", message: "Error copying Box AI response to clipboard!", bannerType: "error" });
     } finally {
         // Always remove the temporary textarea from the DOM.
         document.body.removeChild(textarea);

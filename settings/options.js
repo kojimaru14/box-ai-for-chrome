@@ -1,4 +1,4 @@
-import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, aiQuery } from './config.js';
+import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from './config.js';
 import BOX from '../box.js';
 import './box-ui-elements/picker.js';
 
@@ -84,9 +84,7 @@ document.getElementById('save-instructions').addEventListener('click', onSaveIns
  */
 async function initCustomInstructions() {
   const { BOX__CUSTOM_INSTRUCTIONS: stored = [] } = await chrome.storage.local.get({ BOX__CUSTOM_INSTRUCTIONS: [] });
-  const items = stored.length > 0
-    ? stored
-    : [{ id: crypto.randomUUID(), title: 'Ask Box AI to draft a JIRA', instruction: aiQuery, sortOrder: 0 }];
+  const items = stored.length > 0 ? stored : defaultCustomInstructions;
   renderInstructionsTable(items);
 }
 

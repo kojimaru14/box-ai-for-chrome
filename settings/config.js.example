@@ -1,3 +1,28 @@
 export const BOX__CLIENT_ID = "YOUR_CLIENT_ID_HERE"; // Replace with your actual Box client ID
 export const BOX__CLIENT_SECRET = "YOUR_CLIENT_SECRET_HERE"; // Replace with your actual Box client secret
-export const aiQuery = `Insturction 1`; // Default instruction template for Box AI context menu
+export const defaultCustomInstructions = [
+  {
+    id: 'ASK_BOX_AI_DRAFT_JIRA',
+    title: 'Ask Box AI to draft a JIRA',
+    instruction: `Please generate a Jira bug ticket based on this file.`,
+    sortOrder: 0,
+  },
+  {
+    id: 'BOX_AI_SUMMARIZE_FILE',
+    title: 'Summarize the file',
+    instruction: `Please read the content of the file and provide a concise summary of its key points.`,
+    sortOrder: 1,
+  },
+  {
+    id: 'BOX_AI_EXTRACT_ACTION_ITEMS',
+    title: 'Extract action items',
+    instruction: `Please identify and list all action items from the content of the file.`,
+    sortOrder: 2,
+  },
+  {
+    id: 'BOX_AI_TRANSLATE_FILE_TO_ENGLISH',
+    title: 'Translate file content to English',
+    instruction: `Translate the content of the file entirely into English.`,
+    sortOrder: 3,
+  },
+]; // Default instruction template for Box AI context menu
