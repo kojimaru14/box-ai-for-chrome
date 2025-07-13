@@ -74,10 +74,18 @@ async function initializeFolderPicker() {
 
 document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAuth);
 
+// State for current custom instructions and editing
+let currentItems = [];
+let editingItemId = null;
+
 // Initialize custom instructions UI
 initCustomInstructions();
-document.getElementById('add-instruction').addEventListener('click', onAddInstruction);
+document.getElementById('add-instruction').addEventListener('click', () => openEditModal());
 document.getElementById('save-instructions').addEventListener('click', onSaveInstructions);
+
+// Modal event handlers
+document.getElementById('modal-save').addEventListener('click', onModalSave);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
 
 /**
  * Load and render custom instructions from storage.
@@ -85,7 +93,8 @@ document.getElementById('save-instructions').addEventListener('click', onSaveIns
 async function initCustomInstructions() {
   const { BOX__CUSTOM_INSTRUCTIONS: stored = [] } = await chrome.storage.local.get({ BOX__CUSTOM_INSTRUCTIONS: [] });
   const items = stored.length > 0 ? stored : defaultCustomInstructions;
-  renderInstructionsTable(items);
+  currentItems = items.slice();
+  renderInstructionsTable(currentItems);
 }
 
 /**
@@ -100,39 +109,44 @@ function renderInstructionsTable(items) {
   });
 }
 
+/** Truncate a string to a maximum length, adding an ellipsis if needed */
+function truncateText(str, maxChars = 200) {
+  if (typeof str !== 'string') return str;
+  return str.length > maxChars ? str.slice(0, maxChars) + '…' : str;
+}
+
 /**
  * Create a table row for a custom instruction.
  * @param {Object} item
  */
 function createInstructionRow(item) {
-  const id = item.id || crypto.randomUUID();
   const tr = document.createElement('tr');
-  tr.dataset.id = id;
+  tr.dataset.id = item.id;
 
   const titleTd = document.createElement('td');
-  const titleInput = document.createElement('input');
-  titleInput.type = 'text';
-  titleInput.value = item.title || '';
-  titleTd.appendChild(titleInput);
+  titleTd.textContent = truncateText(item.title);
+  titleTd.title = item.title;
 
   const instrTd = document.createElement('td');
-  const instrTextarea = document.createElement('textarea');
-  instrTextarea.rows = 2;
-  instrTextarea.value = item.instruction || '';
-  instrTd.appendChild(instrTextarea);
+  instrTd.textContent = truncateText(item.instruction);
+  instrTd.title = item.instruction;
 
   const orderTd = document.createElement('td');
-  const orderInput = document.createElement('input');
-  orderInput.type = 'number';
-  orderInput.min = 0;
-  orderInput.value = item.sortOrder || 0;
-  orderTd.appendChild(orderInput);
+  orderTd.textContent = item.sortOrder;
 
   const actionsTd = document.createElement('td');
+  const editButton = document.createElement('button');
+  editButton.type = 'button';
+  editButton.textContent = 'Edit';
+  editButton.addEventListener('click', () => openEditModal(item.id));
   const removeButton = document.createElement('button');
   removeButton.type = 'button';
   removeButton.textContent = 'Remove';
-  removeButton.addEventListener('click', () => tr.remove());
+  removeButton.addEventListener('click', () => {
+    currentItems = currentItems.filter(i => i.id !== item.id);
+    renderInstructionsTable(currentItems);
+  });
+  actionsTd.appendChild(editButton);
   actionsTd.appendChild(removeButton);
 
   tr.appendChild(titleTd);
@@ -143,27 +157,52 @@ function createInstructionRow(item) {
 }
 
 /**
- * Handler to add a new empty instruction row.
+ * Open the modal to add a new or edit existing instruction.
+ * @param {string} [id]
  */
-function onAddInstruction() {
-  const newItem = { id: crypto.randomUUID(), title: '', instruction: '', sortOrder: 0 };
-  const tbody = document.querySelector('#custom-instructions-table tbody');
-  tbody.appendChild(createInstructionRow(newItem));
+function openEditModal(id) {
+  editingItemId = id || crypto.randomUUID();
+  const isNew = !id;
+  document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
+  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0 };
+  document.getElementById('modal-title').value = item.title;
+  document.getElementById('modal-instruction').value = item.instruction;
+  document.getElementById('modal-sortOrder').value = item.sortOrder;
+  document.getElementById('instruction-modal').classList.remove('hidden');
 }
 
 /**
- * Handler to save all instructions to storage.
+ * Persist all instructions to storage.
  */
 async function onSaveInstructions() {
-  const rows = Array.from(document.querySelectorAll('#custom-instructions-table tbody tr'));
-  const items = rows.map(tr => ({
-    id: tr.dataset.id,
-    title: tr.querySelector('td:nth-child(1) input').value.trim(),
-    instruction: tr.querySelector('td:nth-child(2) textarea').value.trim(),
-    sortOrder: parseInt(tr.querySelector('td:nth-child(3) input').value, 10) || 0,
-  }));
-  await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: items });
+  await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
   const status = document.getElementById('instructions-status');
   status.textContent = 'Instructions saved.';
   setTimeout(() => { status.textContent = ''; }, 3000);
+}
+
+/**
+ * Save or add an instruction from the modal.
+ */
+function onModalSave() {
+  const title = document.getElementById('modal-title').value.trim();
+  const instruction = document.getElementById('modal-instruction').value.trim();
+  const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
+  const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
+  const item = { id: editingItemId, title, instruction, sortOrder };
+  if (existingIndex >= 0) {
+    currentItems[existingIndex] = item;
+  } else {
+    currentItems.push(item);
+  }
+  renderInstructionsTable(currentItems);
+  closeModal();
+}
+
+/**
+ * Close the edit modal.
+ */
+function closeModal() {
+  document.getElementById('instruction-modal').classList.add('hidden');
+  editingItemId = null;
 }

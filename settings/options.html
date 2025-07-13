@@ -25,7 +25,6 @@
 
     <div class="setting-card">
       <h2>Custom Instructions</h2>
-      <button id="add-instruction" type="button">Add Instruction</button>
       <table id="custom-instructions-table">
         <thead>
           <tr>
@@ -37,10 +36,31 @@
         </thead>
         <tbody></tbody>
       </table>
-      <button id="save-instructions" type="button">Save Instructions</button>
+      <div class="table-actions">
+        <button id="add-instruction" type="button">Add Instruction</button>
+        <button id="save-instructions" type="button">Save Instructions</button>
+      </div>
       <div id="instructions-status"></div>
     </div>
   </div>
-  <script type="module" src="options.js"></script>
+</div>
+
+<!-- Edit Instruction Modal -->
+<div id="instruction-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3 id="modal-title-label">Edit Instruction</h3>
+    <label for="modal-title">Title</label>
+    <input id="modal-title" type="text" />
+    <label for="modal-instruction">Instruction</label>
+    <textarea id="modal-instruction" rows="4"></textarea>
+    <label for="modal-sortOrder">Sort Order</label>
+    <input id="modal-sortOrder" type="number" min="0" />
+    <div class="modal-actions">
+      <button id="modal-save" type="button">OK</button>
+      <button id="modal-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="options.js"></script>
 </body>
 </html>
