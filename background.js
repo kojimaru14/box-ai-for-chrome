@@ -1,46 +1,8 @@
 import BOX from './box.js';
-import { BOX__CLIENT_ID, BOX__CLIENT_SECRET } from './settings/config.js';
+import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, aiQuery } from './settings/config.js';
 
 const boxClient = new BOX( { BOX__CLIENT_ID, BOX__CLIENT_SECRET });
 
-const aiQuery = `
-This is a file that is a transcript of a Zendesk support ticket. It contains internal comments which are mostly investigation notes.
-You are a support engineer assistant for Box.com. Your task is to generate a Jira bug ticket based on this file. Extract all relevant technical information, write a clear and concise summary, and fill in the appropriate fields using the template below. Use bullet points where needed. If any information is missing, note that clearly.
-Please be sure to write in English, even if the original ticket is in another language (such as Japanese).
-
-Summary: [Concise technical title under 100 characters]  
-Environment:
-- Product/Service: [e.g., Dashboard, API, Mobile App]
-- Version: [If known]
-- Browser/OS/Device: [If applicable]
-
-Description:
-Customer reported the following issue:
-
-"[Insert customer description in quotes or summarized]"
-
-Steps to reproduce:
-1. [Step 1]
-2. [Step 2]
-3. ...
-
-Expected result:
-- [What was expected to happen]
-
-Actual result:
-- [What actually happened]
-
-Error logs / screenshots (if any):
-- [Error messages or logs]
-
-Additional Notes:
-- Ticket URL: [Insert support ticket link or ID]
-- Internal findings or observations:
-  - [Summarize any internal investigation or notes]
-  
-Labels: bug, support, customer_reported, [any additional labels]
-Linked Support Ticket: [Insert ticket link or ID]
-`;
 
 
 /**
