@@ -25,17 +25,34 @@ const folderPicker = new FolderPicker({
 
 // Attach event listener for when the choose button is pressed
 folderPicker.addListener('choose', function(items) {
-    // do something with the items array
-    console.log('Chosen items:', items);
     const folder = items[0];
-    document.getElementById('selected-folder').textContent = `Selected Folder: ${folder.name} (ID: ${folder.id})`;
-    chrome.storage.sync.set({ defaultFolder: folder.id });
+    document.getElementById('selected-folder').textContent =
+        `Selected Folder: ${folder.name} (ID: ${folder.id})`;
+    chrome.storage.local.set({ defaultFolder: { id: folder.id, name: folder.name } });
 });
 
-// Attach event listener for when the cancel button is pressed
-folderPicker.addListener('cancel', function() {
-// do something
-});
+(async () => {
+    const token = await boxClient.getBoxAccessToken();
+    if (token) {
+        try {
+            const userInfo = await boxClient.getUser();
+            document.getElementById('status').textContent =
+                `Logged in as ${userInfo.name} (${userInfo.login})`;
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    const { defaultFolder } = await chrome.storage.local.get('defaultFolder');
+    if (defaultFolder) {
+        if (typeof defaultFolder === 'string') {
+            document.getElementById('selected-folder').textContent =
+                `Selected Folder ID: ${defaultFolder}`;
+        } else {
+            document.getElementById('selected-folder').textContent =
+                `Selected Folder: ${defaultFolder.name} (ID: ${defaultFolder.id})`;
+        }
+    }
+})();
 
 // Show the file picker
 folderPicker.show("0", await boxClient.getBoxAccessToken(), {
