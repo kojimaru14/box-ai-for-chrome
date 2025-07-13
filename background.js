@@ -93,29 +93,13 @@ function sanitizeFilename(input) {
   return sanitized || 'untitled'; // Fallback if filename is empty
 }
 
-async function askBoxAI(boxAccessToken, fileId, query, tab) {
+async function askBoxAI(fileId, query, tab) {
   let attempt = 0;
   const maxAttempts = 5;
   while (attempt < maxAttempts) {
         try {
             showBannerInTab(tab.id, "Asking Box AI...", "info");
-            const response = await fetch(`https://api.box.com/2.0/ai/ask`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${boxAccessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    "mode": "single_item_qa",
-                    "prompt": `${query}`,
-                    "items": [
-                        {
-                            "type": "file",
-                            "id": `${fileId}`
-                        }
-                    ]
-                })
-            });
+            const response = await boxClient.askBoxAI(fileId, query);
 
             if (!response.ok) {
                 throw new Error(`Box AI API request failed: ${response.statusText}`);
@@ -151,7 +135,7 @@ async function handleBoxAIDraftJira(fileName, text, tab) {
     }
     console.log('Box upload complete, file ID:', fileId);
     showBannerInTab(tab.id, "File uploaded to Box, asking Box AI...", "info");
-    const response = await askBoxAI(accessToken, fileId, aiQuery, tab);
+    const response = await askBoxAI(fileId, aiQuery, tab);
     if (!response) {
         showBannerInTab(tab.id, "Failed to get response from Box AI.", "error");
         return console.error('Failed to get response from Box AI', response);

@@ -51,7 +51,6 @@ class BOX {
     }
 
     async refreshAccessToken(refreshToken) {
-        // const { BOX__CLIENT_ID, BOX__CLIENT_SECRET } = await chrome.storage.local.get(['BOX__CLIENT_ID', 'BOX__CLIENT_SECRET']);
         const body = new URLSearchParams({
             grant_type: 'refresh_token',
             refresh_token: refreshToken,
@@ -84,19 +83,20 @@ class BOX {
     }
 
     async getUser(userId="me") {
-        console.log(`${this.LOG} Tokens user:`, this.tokens);
+        const accessToken = await this.getBoxAccessToken();
         const res = await fetch(`https://api.box.com/2.0/users/${userId}`, {
-            headers: { Authorization: `Bearer ${this.tokens.access_token}` }
+            headers: { Authorization: `Bearer ${accessToken}` }
         });
         const json = await res.json();
         return json;
     }
 
-    async askBoxAI(boxAccessToken, fileId, query) {
+    async askBoxAI(fileId, query) {
+        const accessToken = await this.getBoxAccessToken();
         const response = await fetch(`https://api.box.com/2.0/ai/ask`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${boxAccessToken}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -110,7 +110,7 @@ class BOX {
                 ]
             })
         });
-        return response.json();
+        return response;
     }
 
     async uploadFile(fileName, fileData, parentFolderId = '0') {
