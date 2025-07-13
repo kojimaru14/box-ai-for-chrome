@@ -3,23 +3,26 @@
 <head>
   <title>Box AI for Chrome Options</title>
   <link rel="stylesheet" href="box-ui-elements/picker.css" />
-  <style>
-    body { font-family: sans-serif; padding: 1em; }
-    .form-group { margin-bottom: 1em; }
-    label { display: block; margin-bottom: 0.5em; }
-    /* #folder-picker-container { height: 400px; border: 1px solid #ccc; } */
-  </style>
+  <link rel="stylesheet" href="options.css" />
 </head>
 <body>
-  <h1>Box AI for Chrome Options</h1>
-  <div class="form-group">
-    <button id="BTN__BOX_LOGIN" class="btn btn-primary" type="button">Login to Box</button>
-    <div id="status">Not logged in</div>
-    <div class="picker"><button class="btn btn-primary" type="button">Folder Picker</button></div>
-    <div id="selected-folder">No folder selected.</div>
-    <!-- <button id="select-folder">Select Folder</button> -->
+  <div class="container">
+    <h1>Box AI for Chrome Options</h1>
+
+    <div class="setting-card">
+      <h2>Authentication</h2>
+      <button id="BTN__BOX_LOGIN" type="button">Login to Box</button>
+      <div id="status">Not logged in</div>
+    </div>
+
+    <div class="setting-card">
+      <h2>Upload Destination</h2>
+      <div class="picker"><button type="button">Select Folder</button></div>
+      <div id="selected-folder">No folder selected.</div>
+    </div>
+
+    <div id="folder-picker-container"></div>
   </div>
-  <div id="folder-picker-container"></div>
   <script type="module" src="box-ui-elements/picker.js"></script>
   <script type="module" src="options.js"></script>
 </body>
