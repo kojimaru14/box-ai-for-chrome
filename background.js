@@ -1,6 +1,8 @@
 import BOX from './box.js';
 import { BOX__CLIENT_ID, BOX__CLIENT_SECRET } from './settings/config.js';
 
+const boxClient = new BOX( { BOX__CLIENT_ID, BOX__CLIENT_SECRET });
+
 const aiQuery = `
 This is a file that is a transcript of a Zendesk support ticket. It contains internal comments which are mostly investigation notes.
 You are a support engineer assistant for Box.com. Your task is to generate a Jira bug ticket based on this file. Extract all relevant technical information, write a clear and concise summary, and fill in the appropriate fields using the template below. Use bullet points where needed. If any information is missing, note that clearly.
@@ -129,7 +131,6 @@ async function askBoxAI(boxAccessToken, fileId, query, tab) {
 }
 
 async function handleBoxAIDraftJira(fileName, text, tab) {
-    const boxClient = new BOX( { BOX__CLIENT_ID, BOX__CLIENT_SECRET });
     showBannerInTab(tab.id, "Getting Box access token...", "info");
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
@@ -138,17 +139,12 @@ async function handleBoxAIDraftJira(fileName, text, tab) {
     }
 
     showBannerInTab(tab.id, "Uploading file to Box...", "info");
-    const form = new FormData();
     const { BOX__DESTINATION_FOLDER_ID: destinationFolder } = await chrome.storage.local.get('BOX__DESTINATION_FOLDER_ID');
-    form.append('attributes', JSON.stringify({ name: fileName, parent: { id: destinationFolder.id || '0' } }));
-    form.append('file', new Blob([text], { type: 'text/markdown' }), fileName);
-    const uploadRes = await fetch('https://upload.box.com/api/2.0/files/content', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: form
-    });
-    const uploadData = await uploadRes.json();
-    const fileId = uploadData.entries?.[0]?.id;
+    const fileId = await boxClient.uploadFile(
+        fileName,
+        new Blob([text], { type: 'text/markdown' }),
+        destinationFolder.id || '0'
+    );
     if (!fileId) {
         showBannerInTab(tab.id, "Failed to upload file to Box.", "error");
         return console.error('Failed to upload file to Box', uploadData);

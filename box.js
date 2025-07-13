@@ -112,6 +112,31 @@ class BOX {
         });
         return response.json();
     }
+
+    async uploadFile(fileName, fileData, parentFolderId = '0') {
+        const accessToken = await this.getBoxAccessToken();
+        if (!accessToken) {
+            throw new Error(`${this.LOG} Cannot upload file without access token`);
+        }
+        const form = new FormData();
+        form.append('attributes', JSON.stringify({ name: fileName, parent: { id: parentFolderId } }));
+        form.append('file', fileData, fileName);
+        const res = await fetch('https://upload.box.com/api/2.0/files/content', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: form
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`${this.LOG} File upload failed: ${errText}`);
+        }
+        const json = await res.json();
+        const fileId = json.entries?.[0]?.id;
+        if (!fileId) {
+            throw new Error(`${this.LOG} Uploaded file ID not found in response`);
+        }
+        return fileId;
+    }
 }
 
 export default BOX;
