@@ -16,9 +16,9 @@ async function loginBoxOAuth() {
         await boxClient.getTokensAuthorizationCodeGrant(code, clientId, clientSecret, redirectUri);
         const userInfo = await boxClient.getUser();
         document.getElementById('status').textContent = `Logged in as ${userInfo.name} (${userInfo.login})`;
+        await initializeFolderPicker();
     });
 }
-
 
 const folderPicker = new FolderPicker({
     container: '.picker',
@@ -27,10 +27,31 @@ const folderPicker = new FolderPicker({
 // Attach event listener for when the choose button is pressed
 folderPicker.addListener('choose', function(items) {
     const folder = items[0];
-    document.getElementById('selected-folder').textContent =
-        `Selected Folder: ${folder.name} (ID: ${folder.id})`;
+    document.getElementById('selected-folder').textContent = `Selected Folder: ${folder.name} (ID: ${folder.id})`;
     chrome.storage.local.set({ BOX__DESTINATION_FOLDER_ID: { id: folder.id, name: folder.name } });
 });
+
+async function initializeFolderPicker() {
+    const token = await boxClient.getBoxAccessToken();
+    const pickerButton = document.querySelector('.picker button');
+    if (!token) {
+        if (pickerButton) pickerButton.disabled = true;
+        return;
+    }
+    if (pickerButton) pickerButton.disabled = false;
+    folderPicker.show("0", token, {
+        container: '.picker',
+        maxSelectable: 1,
+        canSetShareAccess: false,
+        size: 'small',
+        chooseButtonLabel: 'Select',
+        cancelButtonLabel: 'Cancel',
+        modal: {
+            buttonLabel: 'Folder Picker',
+            buttonClassName: ''
+        }
+    });
+}
 
 (async () => {
     const token = await boxClient.getBoxAccessToken();
@@ -45,28 +66,10 @@ folderPicker.addListener('choose', function(items) {
     }
     const { BOX__DESTINATION_FOLDER_ID: destinationFolder } = await chrome.storage.local.get('BOX__DESTINATION_FOLDER_ID');
     if (destinationFolder) {
-        if (typeof destinationFolder === 'string') {
-            document.getElementById('selected-folder').textContent =
-                `Selected Folder ID: ${destinationFolder}`;
-        } else {
-            document.getElementById('selected-folder').textContent =
-                `Selected Folder: ${destinationFolder.name} (ID: ${destinationFolder.id})`;
-        }
+        document.getElementById('selected-folder').textContent =
+            `Selected Folder: ${destinationFolder.name} (ID: ${destinationFolder.id})`;
     }
+    await initializeFolderPicker();
 })();
-
-// Show the file picker
-folderPicker.show("0", await boxClient.getBoxAccessToken(), {
-    container: '.picker',
-    maxSelectable: 1,
-    canSetShareAccess: false,
-    size: 'small',
-    chooseButtonLabel: 'Select',
-    cancelButtonLabel: 'Cancel',
-    modal: {
-        buttonLabel: 'Folder Picker',
-        buttonClassName: ''
-    }
-});
 
 document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAuth);
