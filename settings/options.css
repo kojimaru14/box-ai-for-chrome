@@ -15,7 +15,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 500px;
+    max-width: 900px;
 }
 
 h1 {
@@ -67,19 +67,40 @@ button:hover {
 
 #custom-instructions-table {
   width: 100%;
-  border-collapse: collapse;
   margin-top: 10px;
-}
-
-#custom-instructions-table th,
-#custom-instructions-table td {
-  border: 1px solid #dddfe2;
-  padding: 8px;
+  border-spacing: 0;
+  border: none;
 }
 
 #custom-instructions-table th {
-  background-color: #f5f6f7;
+  background-color: #f2f3f5;
+  border-bottom: 1px solid #e0e0e0;
   text-align: left;
+  padding: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+#custom-instructions-table td {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 12px;
+}
+
+#custom-instructions-table tbody tr:hover td {
+  background-color: #fafbfc;
+}
+
+#custom-instructions-table th:first-child {
+  border-top-left-radius: 6px;
+}
+#custom-instructions-table th:last-child {
+  border-top-right-radius: 6px;
+}
+#custom-instructions-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 6px;
+}
+#custom-instructions-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 6px;
 }
 
 #custom-instructions-table textarea {
