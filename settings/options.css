@@ -118,7 +118,7 @@ button:hover {
 
 /* Buttons to add/save instructions are inline in a row below the table */
 .table-actions {
-  margin-top: 10px;
+  margin-top: 20px;
   margin-bottom: 10px;
 }
 .table-actions button {
