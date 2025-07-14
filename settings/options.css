@@ -55,6 +55,12 @@ button:hover {
     background-color: #166fe5;
 }
 
+.picker button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
 #status, #selected-folder {
     margin-top: 15px;
     font-size: 14px;
