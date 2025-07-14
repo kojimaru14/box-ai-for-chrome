@@ -12,7 +12,19 @@
     "clipboardWrite"
   ],
   "action": {
-    "default_popup": "popup/popup.html"
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "images/icon128.png",
+      "32": "images/icon128.png",
+      "48": "images/icon128.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "images/icon128.png",
+    "32": "images/icon128.png",
+    "48": "images/icon128.png",
+    "128": "images/icon128.png"
   },
   "options_page": "settings/options.html",
   "background": {
