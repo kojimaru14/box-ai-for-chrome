@@ -3,3 +3,4 @@ node_modules/
 dist/
 public/config.json
 settings/config.js
+*.zip
