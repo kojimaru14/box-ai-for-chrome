@@ -1,3 +1,16 @@
+function isExtensionContextValid() {
+  return typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
+}
+
+document.getElementById('optionsBtn').addEventListener('click', () => {
+  if (isExtensionContextValid()) {
+    chrome.runtime.openOptionsPage();
+  } else {
+    console.warn("Extension context invalidated. Cannot open options page.");
+  }
+});
+
+/*
 async function getSelectedContentWithImages() {
   const selection = window.getSelection();
   const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
@@ -152,3 +165,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     select.appendChild(option);
   });
 });
+*/

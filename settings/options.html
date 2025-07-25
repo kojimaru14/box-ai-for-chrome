@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Box AI for Chrome Options</title>
+  <link rel="stylesheet" href="box-ui-elements/picker.css" />
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Box AI for Chrome Options</h1>
+
+    <div class="setting-card">
+      <h2>Authentication</h2>
+      <button id="BTN__BOX_LOGIN" type="button">Login to Box</button>
+      <div id="status">Not logged in</div>
+    </div>
+
+    <div class="setting-card">
+      <h2>Upload Destination</h2>
+      <div class="picker"><button type="button">Select Folder</button></div>
+      <div id="selected-folder">No folder selected.</div>
+    </div>
+
+    <div id="folder-picker-container"></div>
+
+    <div class="setting-card">
+      <h2>Custom Instructions</h2>
+      <table id="custom-instructions-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Instruction</th>
+            <th>Sort</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="table-actions">
+        <button id="add-instruction" type="button">Add Instruction</button>
+        <button id="save-instructions" type="button">Save Instructions</button>
+      </div>
+      <div id="instructions-status"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Instruction Modal -->
+<div id="instruction-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3 id="modal-title-label">Edit Instruction</h3>
+    <label for="modal-title">Title</label>
+    <input id="modal-title" type="text" />
+    <label for="modal-instruction">Instruction</label>
+    <textarea id="modal-instruction" rows="8"></textarea>
+    <label for="modal-sortOrder">Sort Order</label>
+    <input id="modal-sortOrder" type="number" min="0" />
+    <div class="modal-actions">
+      <button id="modal-save" type="button">OK</button>
+      <button id="modal-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="options.js"></script>
+</body>
+</html>

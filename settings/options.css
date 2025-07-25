@@ -1,0 +1,214 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 900px;
+}
+
+h1 {
+    font-size: 24px;
+    color: #1c1e21;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.setting-card {
+    margin-bottom: 20px;
+    border: 1px solid #dddfe2;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.setting-card h2 {
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #1c1e21;
+}
+
+button {
+    background-color: #1877f2;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #166fe5;
+}
+
+.picker button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+#status, #selected-folder {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #606770;
+}
+
+#folder-picker-container {
+    margin-top: 20px;
+}
+
+#custom-instructions-table {
+  width: 100%;
+  margin-top: 10px;
+  border-spacing: 0;
+  border: none;
+}
+
+#custom-instructions-table th {
+  background-color: #f2f3f5;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: left;
+  padding: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+}
+
+#custom-instructions-table td {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 12px;
+  /* truncate cell content to 200 characters via JS; allow word wrap */
+  overflow-wrap: break-word;
+}
+
+#custom-instructions-table tbody tr:hover td {
+  background-color: #fafbfc;
+}
+
+#custom-instructions-table th:first-child {
+  border-top-left-radius: 6px;
+}
+#custom-instructions-table th:last-child {
+  border-top-right-radius: 6px;
+}
+#custom-instructions-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 6px;
+}
+#custom-instructions-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 6px;
+}
+
+#custom-instructions-table textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+#custom-instructions-table input[type="text"],
+#custom-instructions-table input[type="number"] {
+  width: 100%;
+}
+
+/* Buttons to add/save instructions are inline in a row below the table */
+.table-actions {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+.table-actions button {
+  margin-right: 8px;
+  width: auto;
+  font-size: 16px;
+  padding: 12px 20px;
+}
+.table-actions button:last-child {
+  margin-right: 0;
+}
+
+/* Small inline action buttons in the instructions table */
+#custom-instructions-table td:last-child {
+  white-space: nowrap;
+}
+#custom-instructions-table td:last-child button {
+  width: auto;
+  font-size: 13px;
+  padding: 4px 8px;
+  margin-right: 6px;
+}
+#custom-instructions-table td:last-child button:last-child {
+  margin-right: 0;
+}
+
+/* Modal overlay and panel */
+.modal.hidden {
+  display: none;
+}
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #fff;
+  padding: 30px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  width: 600px;
+  max-width: 95%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+/* Ensure all children respect modal padding by using border-box sizing */
+.modal-content * {
+  box-sizing: border-box;
+}
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+.modal-content label {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+.modal-content input,
+.modal-content textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.modal-actions button {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 14px;
+}

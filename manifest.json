@@ -1,37 +1,37 @@
 {
   "manifest_version": 3,
-  "name": "Box Markdown Uploader",
+  "name": "Box AI for Chrome",
   "version": "1.0",
-  "description": "選択したテキストをMarkdownにしてBoxにアップロードします",
+  "description": "Ask questions about the selected texts using the Box AI API.",
   "permissions": [
-    "scripting",
-    "activeTab",
     "storage",
-    "identity"
+    "identity",
+    "contextMenus",
+    "activeTab",
+    "scripting",
+    "clipboardWrite"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "images/icon128.png",
+      "32": "images/icon128.png",
+      "48": "images/icon128.png",
+      "128": "images/icon128.png"
+    }
   },
+  "icons": {
+    "16": "images/icon128.png",
+    "32": "images/icon128.png",
+    "48": "images/icon128.png",
+    "128": "images/icon128.png"
+  },
+  "options_page": "settings/options.html",
   "background": {
-    "service_worker": "background.js"
-  },
-  "oauth2": {
-    "client_id": "hpr3ho1gh1jir3ifsmqi6s6sz8uzxxia",
-    "scopes": [
-      "item_upload"
-    ]
+    "service_worker": "background.js",
+    "type": "module"
   },
   "host_permissions": [
     "*://*/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "*://*/*"
-      ],
-      "js": [
-        "box.js"
-      ]
-    }
   ]
 }
