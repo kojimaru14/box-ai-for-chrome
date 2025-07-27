@@ -74,6 +74,22 @@ async function initializeFolderPicker() {
 
 document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAuth);
 
+// Initialize 'Delete after copy' cleanup setting
+{
+  const checkbox = document.getElementById('BOX__DELETE_FILE_AFTER_COPY');
+  (async () => {
+    const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
+      await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
+    checkbox.checked = deleteAfterCopy;
+  })();
+  checkbox.addEventListener('change', async (e) => {
+    await chrome.storage.local.set({ BOX__DELETE_FILE_AFTER_COPY: e.target.checked });
+    const status = document.getElementById('cleanup-status');
+    status.textContent = 'Cleanup setting saved.';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  });
+}
+
 // State for current custom instructions and editing
 let currentItems = [];
 let editingItemId = null;

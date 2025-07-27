@@ -71,6 +71,17 @@ button:hover {
     margin-top: 20px;
 }
 
+label.cleanup-checkbox-label {
+    display: block;
+    margin: 15px 0;
+    font-size: 14px;
+    color: #606770;
+}
+label.cleanup-checkbox-label input {
+    margin-right: 8px;
+    vertical-align: text-bottom;
+}
+
 #custom-instructions-table {
   width: 100%;
   margin-top: 10px;

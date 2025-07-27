@@ -137,6 +137,22 @@ class BOX {
         }
         return fileId;
     }
+    
+    /**
+     * Delete a file from Box by its file ID.
+     * @param {string} fileId - The ID of the file to delete.
+     */
+    async deleteFile(fileId) {
+        const accessToken = await this.getBoxAccessToken();
+        const res = await fetch(`https://api.box.com/2.0/files/${fileId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`${this.LOG} Failed to delete file: ${errText}`);
+        }
+    }
 }
 
 export default BOX;

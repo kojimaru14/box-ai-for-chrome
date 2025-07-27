@@ -104,11 +104,23 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, tab) {
         return console.error('Failed to get response from Box AI', response);
     }
     console.log('Box AI response:', response);
-    chrome.scripting.executeScript({
+    await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         function: copyTextToClipboard,
         args: [response.answer || response.text || "No answer provided by Box AI."]
     });
+    // Optionally delete the uploaded file after copying the AI response
+    const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
+        await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
+    if (deleteAfterCopy) {
+        try {
+            await boxClient.deleteFile(fileId);
+            showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
+        } catch (err) {
+            console.error('Error deleting file from Box:', err);
+            showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
+        }
+    }
 }
 
 /**
