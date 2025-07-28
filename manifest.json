@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Box AI for Chrome",
-  "version": "1.0",
+  "version": "1.0.0",
   "description": "Ask questions about the selected texts using the Box AI API.",
   "permissions": [
     "storage",
