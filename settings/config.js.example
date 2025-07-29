@@ -25,4 +25,16 @@ export const defaultCustomInstructions = [
     instruction: `Please translate the English texts to Japanese and Japanese texts to English. Ensure the translation is accurate and maintains the original meaning.`,
     sortOrder: 3,
   },
+  {
+    id: 'BOX_AI_DRAFT_ARTICLE',
+    title: 'Draft a technical article',
+    instruction: `Please draft a technical article based on the content of this file. The article is meant to be a troubleshooting article that helps the user who encounter issue with the software. Make sure to format it properly and include the title and relevant sections such as Issue, Environment, Root Cause and Resolution.`,
+    sortOrder: 4,
+  },
+  {
+    id: 'BOX_AI_EXPLAIN_CODE',
+    title: 'Explain the code',
+    instruction: `Please explain the code in the file, breaking down its functionality and purpose in simple terms. Focus on key components, logic flow, and any important algorithms used.`,
+    sortOrder: 5,
+  },
 ]; // Default instruction template for Box AI context menu

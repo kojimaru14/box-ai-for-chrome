@@ -5,6 +5,7 @@ Ask questions about selected text using the Box AI API directly from your Chrome
 ## Features
 - Upload selected text as a Markdown file to your Box account.
 - Send custom AI instructions (e.g., draft JIRA tickets, summarize, translate) based on the uploaded file.
+- Enter a custom AI instruction at runtime via the context menu.
 - Copy AI-generated responses to the clipboard instantly with a notification banner.
 
 ## Installation
@@ -56,7 +57,7 @@ Before using the extension, you must set up your Box API credentials and authori
       ```bash
       mv settings/config.js.example settings/config.js
       ```  
-   - Open `settings/config.js` and replace `BOX__CLIENT_ID` and `BOX__CLIENT_SECRET` with the values from your Box app (which you obtained  in the step for "Create a Box Developer Application" above)
+   - Open `settings/config.js` and replace `BOX__CLIENT_ID` and `BOX__CLIENT_SECRET` with the values from your Box app (which you obtained in the step for "Create a Box Developer Application" above)
 
 3. **Authorize and configure extension options**
    - Click the extension icon in the toolbar and select **Options**.
@@ -66,7 +67,7 @@ Before using the extension, you must set up your Box API credentials and authori
 
 ## Usage
 1. Navigate to any web page and select the text you want to analyze.
-2. Right-click and choose one of the Box AI actions (e.g., *Draft a JIRA*, *Summarize the texts*).
+2. Right-click and choose one of the Box AI actions (e.g., *Send a custom instruction*, *Draft a JIRA*, *Summarize the texts*).
 3. The extension uploads the selected text to Box, sends it to Box AI with your chosen instruction,
    and copies the AI response to your clipboard.
 4. A notification banner confirms that the AI response has been copied to your clipboard.
@@ -80,7 +81,7 @@ Before using the extension, you must set up your Box API credentials and authori
   - `box.js`: Wrapper for Box OAuth, file uploads, and AI queries.
   - `popup/`: Popup UI for opening Options.
   - `settings/`: Options page UI and default configuration.
-  - `zip-extension.sh`: Script for creating a ZIP package (suitable for Chrome Web Store upload). Usage:
+  - `zip-extension.sh`: Script for creating a ZIP package (for Chrome Web Store upload). Usage: run this at the root of the repository
       ```bash
       ./zip-extension.sh [output-name.zip]
       ```

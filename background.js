@@ -2,6 +2,7 @@ import BOX from './box.js';
 import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from './settings/config.js';
 
 const boxClient = new BOX( { BOX__CLIENT_ID, BOX__CLIENT_SECRET });
+const CUSTOM_INSTRUCTION_ID = 'BOX_AI_CUSTOM_INSTRUCTION';
 
 /**
  * Helper function to display a banner in a specific tab.
@@ -17,16 +18,26 @@ function showBannerInTab(tabId, message, type) {
     });
 }
 
-// Listener for messages from content scripts (like copyTextToClipboard)
+// Listener for messages from content scripts or other functions in background.js (like copyTextToClipboard and promptForCustomInstructionAndSendMessage)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === "displayBanner" && sender.tab) {
-    // If the message is to display a banner, execute the displayBanner function
-    // in the tab where the message originated.
-    showBannerInTab(sender.tab.id, request.message, request.bannerType);
-  }
+    console.log('Received message in background script:', request);
+    if (request.type === "displayBanner" && sender.tab) {
+        showBannerInTab(sender.tab.id, request.message, request.bannerType);
+    } else if (request.type === CUSTOM_INSTRUCTION_ID && sender.tab) {
+        handleBoxAIQuery(request.finalFileName, request.selectionText, request.instruction, sender.tab);
+    }
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === CUSTOM_INSTRUCTION_ID && info.selectionText) {
+        const finalFileName = sanitizeFilename(`${tab.title}_${Date.now()}.md`);
+        chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            function: promptForCustomInstructionAndSendMessage,
+            args: [info.selectionText, finalFileName]
+        });
+        return;
+    }
     if (!info.menuItemId || !info.selectionText) return;
     const finalFileName = sanitizeFilename(`${tab.title}_${Date.now()}.md`);
     chrome.storage.local.get({ BOX__CUSTOM_INSTRUCTIONS: [] }, result => {
@@ -130,6 +141,13 @@ async function initializeContextMenus() {
     await chrome.contextMenus.removeAll();
     const { BOX__CUSTOM_INSTRUCTIONS: stored = [] } = await chrome.storage.local.get('BOX__CUSTOM_INSTRUCTIONS');
     const instructions = stored.length > 0 ? stored : defaultCustomInstructions;
+    // Add the custom-instruction prompt at the top
+    chrome.contextMenus.create({
+        id: CUSTOM_INSTRUCTION_ID,
+        title: 'Send custom instruction',
+        contexts: ['selection'],
+    });
+    // Then add preset custom instructions
     instructions
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .forEach(item => {
@@ -260,4 +278,17 @@ function displayBanner(message, type) {
             banner.remove(); // Remove from DOM after fade out
         }, 500); // Wait for fade-out transition
     }, duration);
+}
+
+function promptForCustomInstructionAndSendMessage(selectionText, finalFileName) {
+    const instruction = prompt('Enter your custom instruction for Box AI:');
+    if (!instruction) {
+        return;
+    }
+    chrome.runtime.sendMessage({
+        type: 'BOX_AI_CUSTOM_INSTRUCTION',
+        instruction,
+        selectionText,
+        finalFileName
+    });
 }
