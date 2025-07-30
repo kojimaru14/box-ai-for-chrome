@@ -12,7 +12,7 @@ Ask questions about selected text using the Box AI API directly from your Chrome
 
 ### Installing from Chrome Web Store
 
-_Coming soon._
+Install from [Chrome Web Store](https://chromewebstore.google.com/detail/box-ai-for-chrome/mimicfcbgocopnofklikpnmcckmiaadn) and skip to step 4. **Authorize and configure extension options** to start using it.
 
 ### Load as an Unpacked Extension
 1. Download the ZIP from the releases page and unzip it, or clone this repository:
@@ -52,14 +52,14 @@ Before using the extension, you must set up your Box API credentials and authori
       chrome-extension://<YOUR_EXTENSION_ID>
       ```
 
-2. **Configure local credentials**  
+3. **Configure local credentials**  
    - Rename `settings/config.js.example` to `settings/config.js`
       ```bash
       mv settings/config.js.example settings/config.js
       ```  
    - Open `settings/config.js` and replace `BOX__CLIENT_ID` and `BOX__CLIENT_SECRET` with the values from your Box app (which you obtained in the step for "Create a Box Developer Application" above)
 
-3. **Authorize and configure extension options**
+4. **Authorize and configure extension options**
    - Click the extension icon in the toolbar and select **Options**.
    - On the Options page, click **Login to Box** and follow the OAuth prompts.
    - Choose a destination folder in your Box account for uploads.
