@@ -155,24 +155,29 @@ class BOX {
         return json;
     }
 
-    async askBoxAI(fileId, query) {
+    /**
+     * Ask Box AI with a custom instruction and optional model.
+     * @param {string} fileId - The Box file ID to query.
+     * @param {string} query - The prompt or instruction to send.
+     * @param {string} [modelId] - Optional AI model ID to use.
+     */
+    async askBoxAI(fileId, query, modelId) {
         const accessToken = await this.getBoxAccessToken();
+        const payload = {
+            mode: 'single_item_qa',
+            prompt: `${query}`,
+            items: [
+                { type: 'file', id: `${fileId}` }
+            ]
+        };
+        if (modelId) payload.model_id = modelId;
         const response = await fetch(`https://api.box.com/2.0/ai/ask`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                "mode": "single_item_qa",
-                "prompt": `${query}`,
-                "items": [
-                    {
-                        "type": "file",
-                        "id": `${fileId}`
-                    }
-                ]
-            })
+            body: JSON.stringify(payload)
         });
         return response;
     }

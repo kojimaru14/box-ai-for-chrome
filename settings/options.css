@@ -257,7 +257,8 @@ label.cleanup-checkbox-label input {
   color: #333;
 }
 .modal-content input,
-.modal-content textarea {
+.modal-content textarea,
+.modal-content select {
   width: 100%;
   margin-top: 4px;
   padding: 8px;

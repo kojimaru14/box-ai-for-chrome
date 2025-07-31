@@ -2,6 +2,14 @@ import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from '.
 import BOX from '../box.js';
 import './box-ui-elements/picker.js';
 
+// Load available AI models for selection
+let models = [];
+async function loadModels() {
+  const response = await fetch('models.json');
+  const edges = await response.json();
+  models = edges.map(edge => edge.node);
+}
+
 const boxClient = new BOX({ BOX__CLIENT_ID, BOX__CLIENT_SECRET });
 const { FolderPicker } = Box;
 
@@ -94,8 +102,11 @@ document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAut
 let currentItems = [];
 let editingItemId = null;
 
-// Initialize custom instructions UI
-initCustomInstructions();
+// Load models then initialize custom instructions UI
+(async () => {
+  await loadModels();
+  initCustomInstructions();
+})();
 document.getElementById('add-instruction').addEventListener('click', () => openEditModal());
 document.getElementById('save-instructions').addEventListener('click', onSaveInstructions);
 
@@ -147,6 +158,13 @@ function createInstructionRow(item) {
   instrTd.textContent = truncateText(item.instruction);
   instrTd.title = item.instruction;
 
+  const modelTd = document.createElement('td');
+  const modelName = item.model
+    ? (models.find(m => m.id === item.model)?.uiName || item.model)
+    : 'Default';
+  modelTd.textContent = modelName;
+  modelTd.title = modelName;
+
   const orderTd = document.createElement('td');
   orderTd.textContent = item.sortOrder;
 
@@ -167,6 +185,7 @@ function createInstructionRow(item) {
 
   tr.appendChild(titleTd);
   tr.appendChild(instrTd);
+  tr.appendChild(modelTd);
   tr.appendChild(orderTd);
   tr.appendChild(actionsTd);
   return tr;
@@ -180,10 +199,27 @@ function openEditModal(id) {
   editingItemId = id || crypto.randomUUID();
   const isNew = !id;
   document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
-  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0 };
+  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '' };
   document.getElementById('modal-title').value = item.title;
   document.getElementById('modal-instruction').value = item.instruction;
   document.getElementById('modal-sortOrder').value = item.sortOrder;
+  // Populate model select options
+  const modelSelect = document.getElementById('modal-model');
+  modelSelect.innerHTML = '';
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Default';
+  modelSelect.appendChild(defaultOption);
+  models.forEach(m => {
+    if (m.supportedPurposes.includes('CHAT')) {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.uiName;
+      if (m.id === item.model) opt.selected = true;
+      modelSelect.appendChild(opt);
+    }
+  });
+  modelSelect.value = item.model;
   document.getElementById('instruction-modal').classList.remove('hidden');
 }
 
@@ -204,8 +240,9 @@ function onModalSave() {
   const title = document.getElementById('modal-title').value.trim();
   const instruction = document.getElementById('modal-instruction').value.trim();
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
+  const model = document.getElementById('modal-model').value;
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
-  const item = { id: editingItemId, title, instruction, sortOrder };
+  const item = { id: editingItemId, title, instruction, sortOrder, model };
   if (existingIndex >= 0) {
     currentItems[existingIndex] = item;
   } else {

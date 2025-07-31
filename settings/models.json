@@ -1,0 +1,570 @@
+[
+  {
+    "node": {
+      "id": "aws__claude_3_5_sonnet",
+      "name": "aws__claude_3_5_sonnet",
+      "uiName": "AWS Claude 3.5 Sonnet",
+      "providerName": "AWS",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/aws-claude-3-5-sonnet-model-card/",
+      "releaseState": "PREVIEW",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "aws__claude_3_7_sonnet",
+      "name": "aws__claude_3_7_sonnet",
+      "uiName": "AWS Claude 3.7 Sonnet",
+      "providerName": "AWS",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/aws-claude-3-7-sonnet-model-card/",
+      "releaseState": "PREVIEW",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "aws__claude_3_haiku",
+      "name": "aws__claude_3_haiku",
+      "uiName": "AWS Claude 3 Haiku",
+      "providerName": "AWS",
+      "supportedPurposes": [
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/aws-claude-3-haiku-model-card/",
+      "releaseState": "PREVIEW",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "aws__claude_3_sonnet",
+      "name": "aws__claude_3_sonnet",
+      "uiName": "AWS Claude 3 Sonnet",
+      "providerName": "AWS",
+      "supportedPurposes": [
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/aws-claude-3-sonnet-model-card/",
+      "releaseState": "PREVIEW",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "aws__claude_4_opus",
+      "name": "aws__claude_4_opus",
+      "uiName": "AWS Claude 4 Opus",
+      "providerName": "AWS",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "PREVIEW",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "aws__claude_4_sonnet",
+      "name": "aws__claude_4_sonnet",
+      "uiName": "AWS Claude 4 Sonnet",
+      "providerName": "AWS",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "PREVIEW",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "azure__openai__gpt_4_1",
+      "name": "azure__openai__gpt_4_1",
+      "uiName": "Azure OpenAI GPT-4.1",
+      "providerName": "AZURE",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 4,
+        "lastUsed": "2025-07-02T08:08:56.980Z",
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "azure__openai__gpt_4_1_mini",
+      "name": "azure__openai__gpt_4_1_mini",
+      "uiName": "Azure OpenAI GPT-4.1 mini",
+      "providerName": "AZURE",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 95,
+        "lastUsed": "2025-07-31T03:04:45.917Z",
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "azure__openai__gpt_4o",
+      "name": "azure__openai__gpt_4o",
+      "uiName": "Azure OpenAI GPT-4o",
+      "providerName": "AZURE",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/azure-openai-gpt-4o-model-card/",
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "azure__openai__gpt_4o_mini",
+      "name": "azure__openai__gpt_4o_mini",
+      "uiName": "Azure OpenAI GPT-4o mini",
+      "providerName": "AZURE",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/azure-openai-gpt-4o-mini-model-card/",
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "azure__openai__text_embedding_ada_002",
+      "name": "azure__openai__text_embedding_ada_002",
+      "uiName": "Azure OpenAI text-embedding-ada-002",
+      "providerName": "AZURE",
+      "supportedPurposes": [
+        "EMBEDDING"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/azure-text-embedding-ada-002-model-card/",
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "google__gemini_2_0_flash_001",
+      "name": "google__gemini_2_0_flash_001",
+      "uiName": "Gemini 2.0 Flash",
+      "providerName": "GOOGLE",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/google-gemini-2-0-flash-001-model-card/",
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "google__gemini_2_0_flash_lite_preview",
+      "name": "google__gemini_2_0_flash_lite_preview",
+      "uiName": "Gemini 2.0 Flash Lite",
+      "providerName": "GOOGLE",
+      "supportedPurposes": [
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": "https://developer.box.com/guides/box-ai/ai-models/google-gemini-2-0-flash-lite-preview-02-05/",
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "google__gemini_2_5_flash",
+      "name": "google__gemini_2_5_flash",
+      "uiName": "Gemini 2.5 Flash",
+      "providerName": "GOOGLE",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "google__gemini_2_5_pro",
+      "name": "google__gemini_2_5_pro",
+      "uiName": "Gemini 2.5 Pro",
+      "providerName": "GOOGLE",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "ibm__llama_3_2_90b_vision_instruct",
+      "name": "ibm__llama_3_2_90b_vision_instruct",
+      "uiName": "IBM Llama 3.2-90b-vision-instruct",
+      "providerName": "IBM",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "PREVIEW",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "openai__gpt_4_1",
+      "name": "openai__gpt_4_1",
+      "uiName": "OpenAI GPT-4.1",
+      "providerName": "OPENAI",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "openai__gpt_4_1_mini",
+      "name": "openai__gpt_4_1_mini",
+      "uiName": "OpenAI GPT-4.1 Mini",
+      "providerName": "OPENAI",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "openai__gpt_4o",
+      "name": "openai__gpt_4o",
+      "uiName": "OpenAI GPT-4o 2024-05-13",
+      "providerName": "OPENAI",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "openai__gpt_4o_mini",
+      "name": "openai__gpt_4o_mini",
+      "uiName": "OpenAI GPT-4o Mini",
+      "providerName": "OPENAI",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "openai__o3",
+      "name": "openai__o3",
+      "uiName": "OpenAI O3",
+      "providerName": "OPENAI",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  },
+  {
+    "node": {
+      "id": "openai__o4_mini",
+      "name": "openai__o4_mini",
+      "uiName": "OpenAI O4 Mini",
+      "providerName": "OPENAI",
+      "supportedPurposes": [
+        "IMAGE",
+        "CHAT"
+      ],
+      "modelUsageData": {
+        "last30DaysUsageSum": 0,
+        "lastUsed": null,
+        "__typename": "AiModelUsageData"
+      },
+      "documentationReference": null,
+      "releaseState": "GA",
+      "lifecycle": {
+        "state": "ACTIVE",
+        "validUntil": null,
+        "__typename": "AiModelLifecycle"
+      },
+      "__typename": "AiModel"
+    },
+    "__typename": "AiModelConnectionEdge"
+  }
+]

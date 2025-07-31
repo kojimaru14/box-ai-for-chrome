@@ -37,9 +37,10 @@
       <h2>Custom Instructions</h2>
       <table id="custom-instructions-table">
         <thead>
-          <tr>
+        <tr>
             <th>Title</th>
             <th>Instruction</th>
+            <th>Model</th>
             <th>Sort</th>
             <th>Actions</th>
           </tr>
@@ -63,6 +64,8 @@
     <input id="modal-title" type="text" />
     <label for="modal-instruction">Instruction</label>
     <textarea id="modal-instruction" rows="8"></textarea>
+    <label for="modal-model">Model</label>
+    <select id="modal-model"></select>
     <label for="modal-sortOrder">Sort Order</label>
     <input id="modal-sortOrder" type="number" min="0" />
     <div class="modal-actions">

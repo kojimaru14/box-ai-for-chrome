@@ -18,13 +18,19 @@ function showBannerInTab(tabId, message, type) {
     });
 }
 
-// Listener for messages from content scripts or other functions in background.js (like copyTextToClipboard and promptForCustomInstructionAndSendMessage)
+// Listener for messages from content scripts or custom instruction prompts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message in background script:', request);
     if (request.type === "displayBanner" && sender.tab) {
         showBannerInTab(sender.tab.id, request.message, request.bannerType);
     } else if (request.type === CUSTOM_INSTRUCTION_ID && sender.tab) {
-        handleBoxAIQuery(request.finalFileName, request.selectionText, request.instruction, sender.tab);
+        handleBoxAIQuery(
+            request.finalFileName,
+            request.selectionText,
+            request.instruction,
+            request.model,
+            sender.tab
+        );
     }
 });
 
@@ -46,7 +52,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             stored.find(i => i.id === info.menuItemId) ||
             defaultCustomInstructions.find(i => i.id === info.menuItemId);
         if (item) {
-            handleBoxAIQuery(finalFileName, info.selectionText, item.instruction, tab);
+            handleBoxAIQuery(
+                finalFileName,
+                info.selectionText,
+                item.instruction,
+                item.model,
+                tab
+            );
         }
     });
 });
@@ -64,13 +76,20 @@ function sanitizeFilename(input) {
   return sanitized || 'untitled'; // Fallback if filename is empty
 }
 
-async function askBoxAI(fileId, query, tab) {
-  let attempt = 0;
-  const maxAttempts = 5;
-  while (attempt < maxAttempts) {
+/**
+ * Ask Box AI with retry, showing banners, and optional model selection.
+ * @param {string} fileId - The Box file ID to query.
+ * @param {string} query - The prompt or instruction to send.
+ * @param {string} [modelId] - Optional AI model ID to use.
+ * @param {object} tab - The Chrome tab object for displaying banners.
+ */
+async function askBoxAI(fileId, query, modelId, tab) {
+    let attempt = 0;
+    const maxAttempts = 5;
+    while (attempt < maxAttempts) {
         try {
             showBannerInTab(tab.id, "Asking Box AI...", "info");
-            const response = await boxClient.askBoxAI(fileId, query);
+            const response = await boxClient.askBoxAI(fileId, query, modelId);
 
             if (!response.ok) {
                 throw new Error(`Box AI API request failed: ${response.statusText}`);
@@ -88,7 +107,7 @@ async function askBoxAI(fileId, query, tab) {
 /**
  * Generic handler for Box AI requests with a custom instruction query.
  */
-async function handleBoxAIQuery(fileName, text, instructionQuery, tab) {
+async function handleBoxAIQuery(fileName, text, instructionQuery, modelId, tab) {
     showBannerInTab(tab.id, "Getting Box access token...", "info");
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
@@ -109,7 +128,7 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, tab) {
     }
     console.log('Box upload complete, file ID:', fileId);
     showBannerInTab(tab.id, "File uploaded to Box, asking Box AI...", "info");
-    const response = await askBoxAI(fileId, instructionQuery, tab);
+    const response = await askBoxAI(fileId, instructionQuery, modelId, tab);
     if (!response) {
         showBannerInTab(tab.id, "Failed to get response from Box AI.", "error");
         return console.error('Failed to get response from Box AI', response);
