@@ -38,11 +38,12 @@
       <table id="custom-instructions-table">
         <thead>
         <tr>
-            <th>Title</th>
-            <th>Instruction</th>
-            <th>Model</th>
-            <th>Sort</th>
-            <th>Actions</th>
+          <th>Title</th>
+          <th>Instruction</th>
+          <th>Model</th>
+          <th>Language</th>
+          <th>Sort</th>
+          <th>Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -66,6 +67,11 @@
     <textarea id="modal-instruction" rows="8"></textarea>
     <label for="modal-model">Model</label>
     <select id="modal-model"></select>
+    <label for="modal-language">Language</label>
+    <select id="modal-language">
+      <option value="en">English</option>
+      <option value="ja">Japanese</option>
+    </select>
     <label for="modal-sortOrder">Sort Order</label>
     <input id="modal-sortOrder" type="number" min="0" />
     <div class="modal-actions">
