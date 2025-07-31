@@ -1,6 +1,15 @@
 import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from './config.js';
 import BOX from '../box.js';
+import { displayBanner } from './banner.js';
 import './box-ui-elements/picker.js';
+
+// Load available AI models for selection
+let models = [];
+async function loadModels() {
+  const response = await fetch('models.json');
+  const edges = await response.json();
+  models = edges.map(edge => edge.node);
+}
 
 const boxClient = new BOX({ BOX__CLIENT_ID, BOX__CLIENT_SECRET });
 const { FolderPicker } = Box;
@@ -93,9 +102,17 @@ document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAut
 // State for current custom instructions and editing
 let currentItems = [];
 let editingItemId = null;
+// Stores the system prompt template for the model selected in the modal
+// Stores the system prompt template for the model selected in the modal
+let modalModelConfig = '';
+// Stores the previously-selected model in the modal (for revert on failure)
+let modalPreviousModel = '';
 
-// Initialize custom instructions UI
-initCustomInstructions();
+// Load models then initialize custom instructions UI
+(async () => {
+  await loadModels();
+  initCustomInstructions();
+})();
 document.getElementById('add-instruction').addEventListener('click', () => openEditModal());
 document.getElementById('save-instructions').addEventListener('click', onSaveInstructions);
 
@@ -147,6 +164,13 @@ function createInstructionRow(item) {
   instrTd.textContent = truncateText(item.instruction);
   instrTd.title = item.instruction;
 
+  const modelTd = document.createElement('td');
+  const modelName = item.model
+    ? (models.find(m => m.id === item.model)?.uiName || item.model)
+    : 'Default';
+  modelTd.textContent = modelName;
+  modelTd.title = modelName;
+
   const orderTd = document.createElement('td');
   orderTd.textContent = item.sortOrder;
 
@@ -167,6 +191,7 @@ function createInstructionRow(item) {
 
   tr.appendChild(titleTd);
   tr.appendChild(instrTd);
+  tr.appendChild(modelTd);
   tr.appendChild(orderTd);
   tr.appendChild(actionsTd);
   return tr;
@@ -176,14 +201,74 @@ function createInstructionRow(item) {
  * Open the modal to add a new or edit existing instruction.
  * @param {string} [id]
  */
-function openEditModal(id) {
+async function openEditModal(id) {
   editingItemId = id || crypto.randomUUID();
   const isNew = !id;
   document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
-  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0 };
+  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '', modelConfig: '' };
+  modalModelConfig = item.modelConfig || '';
+  // Initialize previous model for potential revert on failure
+  modalPreviousModel = item.model || '';
   document.getElementById('modal-title').value = item.title;
   document.getElementById('modal-instruction').value = item.instruction;
   document.getElementById('modal-sortOrder').value = item.sortOrder;
+  // Populate model select options
+  const modelSelect = document.getElementById('modal-model');
+  modelSelect.innerHTML = '';
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Default';
+  modelSelect.appendChild(defaultOption);
+  models.forEach(m => {
+    if (m.supportedPurposes.includes('CHAT')) {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.uiName;
+      if (m.id === item.model) opt.selected = true;
+      modelSelect.appendChild(opt);
+    }
+  });
+  modelSelect.value = item.model;
+  const saveBtn = document.getElementById('modal-save');
+  // If a non-default model is pre-selected and we don't yet have its prompt template, fetch it now
+  if (item.model && !modalModelConfig) {
+    saveBtn.disabled = true;
+    try {
+      modalModelConfig = await boxClient.getAiAgentDefaultConfig(item.model) || '';
+      modalPreviousModel = item.model;
+    } catch (err) {
+      console.error(`Failed to load prompt template for model ${item.model}`, err);
+      displayBanner(`Failed to load prompt template for model ${item.model}.`, 'error');
+      modalModelConfig = '';
+      modelSelect.value = modalPreviousModel;
+    }
+  }
+  // Disable OK if still no prompt template when a model is selected
+  saveBtn.disabled = Boolean(item.model && !modalModelConfig);
+  modelSelect.onchange = async e => {
+    const selectedModel = e.target.value;
+    // Disable OK until prompt-template load completes
+    saveBtn.disabled = true;
+    if (selectedModel) {
+      try {
+        modalModelConfig = await boxClient.getAiAgentDefaultConfig(selectedModel) || '';
+        // On success, update previousModel reference
+        modalPreviousModel = selectedModel;
+      } catch (err) {
+        console.error(`Failed to load prompt template for model ${selectedModel}`, err);
+        displayBanner(`Failed to load prompt template for model ${selectedModel}.`, 'error');
+        // Revert dropdown to prior selection
+        modelSelect.value = modalPreviousModel;
+      }
+    } else {
+      modalModelConfig = '';
+      modalPreviousModel = '';
+    }
+    // Only re-enable OK if no model (default) or we have a prompt template loaded
+    if (!selectedModel || modalModelConfig) {
+      saveBtn.disabled = false;
+    }
+  };
   document.getElementById('instruction-modal').classList.remove('hidden');
 }
 
@@ -191,25 +276,57 @@ function openEditModal(id) {
  * Persist all instructions to storage.
  */
 async function onSaveInstructions() {
-  await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-  const status = document.getElementById('instructions-status');
-  status.textContent = 'Instructions saved.';
-  setTimeout(() => { status.textContent = ''; }, 3000);
+  try {
+    await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+    displayBanner('Instructions saved.', 'success');
+    const status = document.getElementById('instructions-status');
+    status.textContent = 'Instructions saved.';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (err) {
+    console.error('Failed to save instructions', err);
+    displayBanner('Failed to save instructions.', 'error');
+  }
 }
 
 /**
  * Save or add an instruction from the modal.
  */
-function onModalSave() {
+async function onModalSave() {
+  const saveBtn = document.getElementById('modal-save');
+  saveBtn.disabled = true;
   const title = document.getElementById('modal-title').value.trim();
   const instruction = document.getElementById('modal-instruction').value.trim();
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
+  const model = document.getElementById('modal-model').value;
+  // Ensure the prompt template is fresh before saving
+  // if (model) {
+  //   try {
+  //     modalModelConfig = await boxClient.getAiAgentDefaultConfig(model) || '';
+  //   } catch (err) {
+  //     console.error(`Failed to load prompt template for model ${model}`, err);
+  //     displayBanner(`Failed to load prompt template for model ${model}.`, 'error');
+  //     saveBtn.disabled = false;
+  //     return;
+  //   }
+  // } else {
+  //   modalModelConfig = '';
+  // }
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
-  const item = { id: editingItemId, title, instruction, sortOrder };
+  const item = { id: editingItemId, title, instruction, sortOrder, model, modelConfig: modalModelConfig };
   if (existingIndex >= 0) {
     currentItems[existingIndex] = item;
   } else {
     currentItems.push(item);
+  }
+  try {
+    await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+    displayBanner('Instructions saved.', 'success');
+    const status = document.getElementById('instructions-status');
+    status.textContent = 'Instructions saved.';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (err) {
+    console.error('Failed to save instructions', err);
+    displayBanner('Failed to save instructions.', 'error');
   }
   renderInstructionsTable(currentItems);
   closeModal();

@@ -63,7 +63,7 @@ Before using the extension, you must set up your Box API credentials and authori
    - Click the extension icon in the toolbar and select **Options**.
    - On the Options page, click **Login to Box** and follow the OAuth prompts.
    - Choose a destination folder in your Box account for uploads.
-   - (Optional) Edit or add custom AI instructions for the context menu commands and click **Save Instructions**.
+   - (Optional) Edit, add, or remove custom AI instructions for the context menu commands, select a preferred AI model (LLM) for each instruction, and click **Save Instructions**.
 
 ## Usage
 1. Navigate to any web page and select the text you want to analyze.

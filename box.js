@@ -155,26 +155,48 @@ class BOX {
         return json;
     }
 
-    async askBoxAI(fileId, query) {
+    /**
+     * Ask Box AI with a custom instruction and optional model.
+     * @param {string} fileId - The Box file ID to query.
+     * @param {string} query - The prompt or instruction to send.
+     * @param {string} [modelId] - Optional AI model ID to use.
+     */
+    async askBoxAI(fileId, query, modelConfig) {
         const accessToken = await this.getBoxAccessToken();
+        const payload = {
+            mode: 'single_item_qa',
+            prompt: `${query}`,
+            items: [ { type: 'file', id: `${fileId}` } ]
+        };
+        if (modelConfig) payload.ai_agent = modelConfig;
+        console.log(`${this.LOG} Asking Box AI with payload:`, payload);
         const response = await fetch(`https://api.box.com/2.0/ai/ask`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                "mode": "single_item_qa",
-                "prompt": `${query}`,
-                "items": [
-                    {
-                        "type": "file",
-                        "id": `${fileId}`
-                    }
-                ]
-            })
+            body: JSON.stringify(payload)
         });
         return response;
+    }
+
+    /**
+     * Retrieve the default AI agent prompt template for a given model.
+     * @param {string} modelId - The AI model ID to fetch the system prompt template for.
+     * @returns {Promise<string>} The prompt template string.
+     */
+    async getAiAgentDefaultConfig(modelId, lang = 'en') {
+        const accessToken = await this.getBoxAccessToken();
+        const response = await fetch(`https://api.box.com/2.0/ai_agent_default?mode=ask&model=${modelId}&language=${lang}`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to fetch default AI agent configuration: ${errorText}`);
+        }
+        const result = await response.json();
+        return result;
     }
 
     async uploadFile(fileName, fileData, parentFolderId = '0') {
