@@ -20,6 +20,59 @@ class BOX {
         return this.#LOGHEADER;
     }
 
+    async #deriveKey() {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+            'raw',
+            enc.encode(this.clientSecret),
+            'PBKDF2',
+            false,
+            ['deriveKey']
+        );
+        return crypto.subtle.deriveKey(
+            {
+                name: 'PBKDF2',
+                salt: enc.encode(this.clientId),
+                iterations: 100000,
+                hash: 'SHA-256'
+            },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    }
+
+    async #encryptData(data) {
+        const key = await this.#deriveKey();
+        const enc = new TextEncoder();
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const cipherBuffer = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            enc.encode(JSON.stringify(data))
+        );
+        const ivArr = Array.from(iv);
+        const ctArr = Array.from(new Uint8Array(cipherBuffer));
+        return {
+            iv: btoa(String.fromCharCode(...ivArr)),
+            ciphertext: btoa(String.fromCharCode(...ctArr))
+        };
+    }
+
+    async #decryptData(encrypted) {
+        const key = await this.#deriveKey();
+        const iv = Uint8Array.from(atob(encrypted.iv), c => c.charCodeAt(0));
+        const ct = Uint8Array.from(atob(encrypted.ciphertext), c => c.charCodeAt(0));
+        const plainBuffer = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            ct
+        );
+        const dec = new TextDecoder();
+        return JSON.parse(dec.decode(plainBuffer));
+    }
+
     async getTokensAuthorizationCodeGrant(code, clientId, clientSecret, redirectUri) {
         const response = await fetch('https://api.box.com/oauth2/token', {
             method: 'POST',
@@ -33,19 +86,29 @@ class BOX {
             })
         });
         const tokenData = await response.json();
-        this.saveTokens(tokenData);
+        await this.saveTokens(tokenData);
     }
 
     async getBoxAccessToken() {
-        const { BOX__CREDENTIALS: tokens }  = await chrome.storage.local.get("BOX__CREDENTIALS");
+        const result = await chrome.storage.local.get("BOX__CREDENTIALS");
+        let tokens;
+        if (result.BOX__CREDENTIALS) {
+            try {
+                tokens = await this.#decryptData(result.BOX__CREDENTIALS);
+            } catch (e) {
+                console.error(`${this.LOG} Failed to decrypt stored tokens:`, e);
+                await chrome.storage.local.remove("BOX__CREDENTIALS");
+                tokens = null;
+            }
+        }
         this.tokens = tokens;
         if (tokens && Date.now() < tokens.expires_at) {
-            return tokens.access_token; // Within valid period
+            return tokens.access_token;
         } else if (tokens && tokens.refresh_token) {
             try {
                 return await this.refreshAccessToken(tokens.refresh_token);
             } catch (e) {
-                console.warn("Token refresh failed. You need to re-authorize the app via Options page:", e);
+                console.warn(`${this.LOG} Token refresh failed. You need to re-authorize the app via Options page:`, e);
             }
         }
     }
@@ -73,12 +136,13 @@ class BOX {
 
     async saveTokens(tokenData) {
         this.tokens = {
-                access_token: tokenData.access_token,
-                refresh_token: tokenData.refresh_token,
-                expires_at: tokenData.expires_in ? Date.now() + tokenData.expires_in * 1000 : null
-            }
+            access_token: tokenData.access_token,
+            refresh_token: tokenData.refresh_token,
+            expires_at: tokenData.expires_in ? Date.now() + tokenData.expires_in * 1000 : null
+        };
+        const encrypted = await this.#encryptData(this.tokens);
         await chrome.storage.local.set({
-            ["BOX__CREDENTIALS"]: this.tokens
+            ["BOX__CREDENTIALS"]: encrypted
         });
     }
 
