@@ -20,6 +20,7 @@ echo "Packaging extension into: $OUTPUT"
 EXCLUDE_PATTERNS=(
   ".git/*"
   ".gitignore"
+  ".gitattributes"
   "*.md"
   "*.zip"
   "zip-extension.sh"
