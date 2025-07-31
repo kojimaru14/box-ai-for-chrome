@@ -252,7 +252,7 @@ async function onSaveInstructions() {
 /**
  * Save or add an instruction from the modal.
  */
-function onModalSave() {
+async function onModalSave() {
   const title = document.getElementById('modal-title').value.trim();
   const instruction = document.getElementById('modal-instruction').value.trim();
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
@@ -264,6 +264,10 @@ function onModalSave() {
   } else {
     currentItems.push(item);
   }
+  await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+  const status = document.getElementById('instructions-status');
+  status.textContent = 'Instructions saved.';
+  setTimeout(() => { status.textContent = ''; }, 3000);
   renderInstructionsTable(currentItems);
   closeModal();
 }
