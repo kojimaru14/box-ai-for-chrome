@@ -102,7 +102,10 @@ document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAut
 let currentItems = [];
 let editingItemId = null;
 // Stores the system prompt template for the model selected in the modal
+// Stores the system prompt template for the model selected in the modal
 let modalModelConfig = '';
+// Stores the previously-selected model in the modal (for revert on failure)
+let modalPreviousModel = '';
 
 // Load models then initialize custom instructions UI
 (async () => {
@@ -203,6 +206,8 @@ function openEditModal(id) {
   document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
   const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '', modelConfig: '' };
   modalModelConfig = item.modelConfig || '';
+  // Initialize previous model for potential revert on failure
+  modalPreviousModel = item.model || '';
   document.getElementById('modal-title').value = item.title;
   document.getElementById('modal-instruction').value = item.instruction;
   document.getElementById('modal-sortOrder').value = item.sortOrder;
@@ -223,18 +228,29 @@ function openEditModal(id) {
     }
   });
   modelSelect.value = item.model;
+  const saveBtn = document.getElementById('modal-save');
+  // Ensure OK button is enabled when modal opens
+  saveBtn.disabled = false;
   modelSelect.onchange = async e => {
     const selectedModel = e.target.value;
+    // Disable OK until prompt-template load completes
+    saveBtn.disabled = true;
     if (selectedModel) {
       try {
         modalModelConfig = await boxClient.getAiAgentDefaultConfig(selectedModel) || '';
+        // On success, update previousModel reference
+        modalPreviousModel = selectedModel;
       } catch (err) {
         console.error(`Failed to load prompt template for model ${selectedModel}`, err);
         modalModelConfig = '';
+        // Revert dropdown to prior selection
+        modelSelect.value = modalPreviousModel;
       }
     } else {
       modalModelConfig = '';
+      modalPreviousModel = '';
     }
+    saveBtn.disabled = false;
   };
   document.getElementById('instruction-modal').classList.remove('hidden');
 }
