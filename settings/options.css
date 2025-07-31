@@ -115,6 +115,13 @@ button:hover {
   cursor: not-allowed;
 }
 
+/* Grey out modal OK button when disabled */
+#modal-save:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
 #status, #selected-folder {
     margin-top: 15px;
     font-size: 14px;
