@@ -2,6 +2,39 @@ import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from '.
 import BOX from '../box.js';
 import './box-ui-elements/picker.js';
 
+// Function to show a transient banner on the page (success/info/error)
+function displayBanner(message, type) {
+  const existing = document.getElementById('chrome-extension-copy-banner');
+  if (existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'chrome-extension-copy-banner';
+  banner.textContent = message;
+  banner.style.position = 'fixed';
+  banner.style.top = '20px';
+  banner.style.left = '50%';
+  banner.style.transform = 'translateX(-50%)';
+  banner.style.padding = '10px 20px';
+  banner.style.borderRadius = '5px';
+  banner.style.color = 'white';
+  banner.style.fontWeight = 'bold';
+  banner.style.zIndex = '99999';
+  banner.style.textAlign = 'center';
+  banner.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
+  banner.style.opacity = '0';
+  banner.style.transition = 'opacity 0.5s ease-in-out';
+  banner.style.maxWidth = '80%';
+  if (type === 'success') banner.style.backgroundColor = '#4CAF50';
+  else if (type === 'error') banner.style.backgroundColor = '#F44336';
+  else banner.style.backgroundColor = '#2196F3';
+  document.body.appendChild(banner);
+  setTimeout(() => { banner.style.opacity = '1'; }, 50);
+  const duration = type === 'info' ? 3000 : 7000;
+  setTimeout(() => {
+    banner.style.opacity = '0';
+    setTimeout(() => banner.remove(), 500);
+  }, duration);
+}
+
 // Load available AI models for selection
 let models = [];
 async function loadModels() {
@@ -242,6 +275,7 @@ function openEditModal(id) {
         modalPreviousModel = selectedModel;
       } catch (err) {
         console.error(`Failed to load prompt template for model ${selectedModel}`, err);
+        displayBanner(`Failed to load prompt template for model ${selectedModel}.`, 'error');
         modalModelConfig = '';
         // Revert dropdown to prior selection
         modelSelect.value = modalPreviousModel;
@@ -259,10 +293,16 @@ function openEditModal(id) {
  * Persist all instructions to storage.
  */
 async function onSaveInstructions() {
-  await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-  const status = document.getElementById('instructions-status');
-  status.textContent = 'Instructions saved.';
-  setTimeout(() => { status.textContent = ''; }, 3000);
+  try {
+    await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+    displayBanner('Instructions saved.', 'success');
+    const status = document.getElementById('instructions-status');
+    status.textContent = 'Instructions saved.';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (err) {
+    console.error('Failed to save instructions', err);
+    displayBanner('Failed to save instructions.', 'error');
+  }
 }
 
 /**
@@ -280,10 +320,16 @@ async function onModalSave() {
   } else {
     currentItems.push(item);
   }
-  await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-  const status = document.getElementById('instructions-status');
-  status.textContent = 'Instructions saved.';
-  setTimeout(() => { status.textContent = ''; }, 3000);
+  try {
+    await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+    displayBanner('Instructions saved.', 'success');
+    const status = document.getElementById('instructions-status');
+    status.textContent = 'Instructions saved.';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (err) {
+    console.error('Failed to save instructions', err);
+    displayBanner('Failed to save instructions.', 'error');
+  }
   renderInstructionsTable(currentItems);
   closeModal();
 }
