@@ -201,7 +201,7 @@ function createInstructionRow(item) {
  * Open the modal to add a new or edit existing instruction.
  * @param {string} [id]
  */
-function openEditModal(id) {
+async function openEditModal(id) {
   editingItemId = id || crypto.randomUUID();
   const isNew = !id;
   document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
@@ -230,8 +230,21 @@ function openEditModal(id) {
   });
   modelSelect.value = item.model;
   const saveBtn = document.getElementById('modal-save');
-  // Ensure OK button is enabled when modal opens
-  saveBtn.disabled = false;
+  // If a non-default model is pre-selected and we don't yet have its prompt template, fetch it now
+  if (item.model && !modalModelConfig) {
+    saveBtn.disabled = true;
+    try {
+      modalModelConfig = await boxClient.getAiAgentDefaultConfig(item.model) || '';
+      modalPreviousModel = item.model;
+    } catch (err) {
+      console.error(`Failed to load prompt template for model ${item.model}`, err);
+      displayBanner(`Failed to load prompt template for model ${item.model}.`, 'error');
+      modalModelConfig = '';
+      modelSelect.value = modalPreviousModel;
+    }
+  }
+  // Disable OK if still no prompt template when a model is selected
+  saveBtn.disabled = Boolean(item.model && !modalModelConfig);
   modelSelect.onchange = async e => {
     const selectedModel = e.target.value;
     // Disable OK until prompt-template load completes
@@ -244,7 +257,6 @@ function openEditModal(id) {
       } catch (err) {
         console.error(`Failed to load prompt template for model ${selectedModel}`, err);
         displayBanner(`Failed to load prompt template for model ${selectedModel}.`, 'error');
-        modalModelConfig = '';
         // Revert dropdown to prior selection
         modelSelect.value = modalPreviousModel;
       }
@@ -252,7 +264,10 @@ function openEditModal(id) {
       modalModelConfig = '';
       modalPreviousModel = '';
     }
-    saveBtn.disabled = false;
+    // Only re-enable OK if no model (default) or we have a prompt template loaded
+    if (!selectedModel || modalModelConfig) {
+      saveBtn.disabled = false;
+    }
   };
   document.getElementById('instruction-modal').classList.remove('hidden');
 }
@@ -277,10 +292,25 @@ async function onSaveInstructions() {
  * Save or add an instruction from the modal.
  */
 async function onModalSave() {
+  const saveBtn = document.getElementById('modal-save');
+  saveBtn.disabled = true;
   const title = document.getElementById('modal-title').value.trim();
   const instruction = document.getElementById('modal-instruction').value.trim();
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
   const model = document.getElementById('modal-model').value;
+  // Ensure the prompt template is fresh before saving
+  // if (model) {
+  //   try {
+  //     modalModelConfig = await boxClient.getAiAgentDefaultConfig(model) || '';
+  //   } catch (err) {
+  //     console.error(`Failed to load prompt template for model ${model}`, err);
+  //     displayBanner(`Failed to load prompt template for model ${model}.`, 'error');
+  //     saveBtn.disabled = false;
+  //     return;
+  //   }
+  // } else {
+  //   modalModelConfig = '';
+  // }
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
   const item = { id: editingItemId, title, instruction, sortOrder, model, modelConfig: modalModelConfig };
   if (existingIndex >= 0) {
