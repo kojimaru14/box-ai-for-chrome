@@ -125,8 +125,10 @@ document.getElementById('modal-cancel').addEventListener('click', closeModal);
  */
 async function initCustomInstructions() {
   const { BOX__CUSTOM_INSTRUCTIONS: stored = [] } = await chrome.storage.local.get({ BOX__CUSTOM_INSTRUCTIONS: [] });
-  const items = stored.length > 0 ? stored : defaultCustomInstructions;
-  currentItems = items.slice();
+  // Normalize language (default to English) on load
+  const source = stored.length > 0 ? stored : defaultCustomInstructions;
+  const items = source.map(item => ({ ...item, language: item.language || 'en' }));
+  currentItems = items;
   renderInstructionsTable(currentItems);
 }
 
@@ -171,6 +173,10 @@ function createInstructionRow(item) {
   modelTd.textContent = modelName;
   modelTd.title = modelName;
 
+  const langTd = document.createElement('td');
+  const langName = item.language === 'ja' ? 'Japanese' : 'English';
+  langTd.textContent = langName;
+  langTd.title = langName;
   const orderTd = document.createElement('td');
   orderTd.textContent = item.sortOrder;
 
@@ -192,6 +198,7 @@ function createInstructionRow(item) {
   tr.appendChild(titleTd);
   tr.appendChild(instrTd);
   tr.appendChild(modelTd);
+  tr.appendChild(langTd);
   tr.appendChild(orderTd);
   tr.appendChild(actionsTd);
   return tr;
@@ -229,46 +236,9 @@ async function openEditModal(id) {
     }
   });
   modelSelect.value = item.model;
+  document.getElementById('modal-language').value = item.language || 'en';
   const saveBtn = document.getElementById('modal-save');
-  // If a non-default model is pre-selected and we don't yet have its prompt template, fetch it now
-  if (item.model && !modalModelConfig) {
-    saveBtn.disabled = true;
-    try {
-      modalModelConfig = await boxClient.getAiAgentDefaultConfig(item.model) || '';
-      modalPreviousModel = item.model;
-    } catch (err) {
-      console.error(`Failed to load prompt template for model ${item.model}`, err);
-      displayBanner(`Failed to load prompt template for model ${item.model}.`, 'error');
-      modalModelConfig = '';
-      modelSelect.value = modalPreviousModel;
-    }
-  }
-  // Disable OK if still no prompt template when a model is selected
-  saveBtn.disabled = Boolean(item.model && !modalModelConfig);
-  modelSelect.onchange = async e => {
-    const selectedModel = e.target.value;
-    // Disable OK until prompt-template load completes
-    saveBtn.disabled = true;
-    if (selectedModel) {
-      try {
-        modalModelConfig = await boxClient.getAiAgentDefaultConfig(selectedModel) || '';
-        // On success, update previousModel reference
-        modalPreviousModel = selectedModel;
-      } catch (err) {
-        console.error(`Failed to load prompt template for model ${selectedModel}`, err);
-        displayBanner(`Failed to load prompt template for model ${selectedModel}.`, 'error');
-        // Revert dropdown to prior selection
-        modelSelect.value = modalPreviousModel;
-      }
-    } else {
-      modalModelConfig = '';
-      modalPreviousModel = '';
-    }
-    // Only re-enable OK if no model (default) or we have a prompt template loaded
-    if (!selectedModel || modalModelConfig) {
-      saveBtn.disabled = false;
-    }
-  };
+  saveBtn.disabled = false;
   document.getElementById('instruction-modal').classList.remove('hidden');
 }
 
@@ -298,21 +268,22 @@ async function onModalSave() {
   const instruction = document.getElementById('modal-instruction').value.trim();
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
   const model = document.getElementById('modal-model').value;
+  const language = document.getElementById('modal-language').value;
   // Ensure the prompt template is fresh before saving
-  // if (model) {
-  //   try {
-  //     modalModelConfig = await boxClient.getAiAgentDefaultConfig(model) || '';
-  //   } catch (err) {
-  //     console.error(`Failed to load prompt template for model ${model}`, err);
-  //     displayBanner(`Failed to load prompt template for model ${model}.`, 'error');
-  //     saveBtn.disabled = false;
-  //     return;
-  //   }
-  // } else {
-  //   modalModelConfig = '';
-  // }
+  if (model) {
+    try {
+      modalModelConfig = await boxClient.getAiAgentDefaultConfig(model, language) || '';
+    } catch (err) {
+      console.error(`Failed to load prompt template for model ${model}`, err);
+      displayBanner(`Failed to load prompt template for model ${model}.`, 'error');
+      saveBtn.disabled = false;
+      return;
+    }
+  } else {
+    modalModelConfig = '';
+  }
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
-  const item = { id: editingItemId, title, instruction, sortOrder, model, modelConfig: modalModelConfig };
+  const item = { id: editingItemId, title, instruction, sortOrder, model, language, modelConfig: modalModelConfig };
   if (existingIndex >= 0) {
     currentItems[existingIndex] = item;
   } else {
