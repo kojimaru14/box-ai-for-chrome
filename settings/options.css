@@ -165,6 +165,7 @@ label.cleanup-checkbox-label input {
   padding: 12px;
   /* truncate cell content to 200 characters via JS; allow word wrap */
   overflow-wrap: break-word;
+  font-size: 12px;
 }
 
 #custom-instructions-table tbody tr:hover td {
@@ -187,11 +188,13 @@ label.cleanup-checkbox-label input {
 #custom-instructions-table textarea {
   width: 100%;
   resize: vertical;
+  font-size: 14px;
 }
 
 #custom-instructions-table input[type="text"],
 #custom-instructions-table input[type="number"] {
   width: 100%;
+  font-size: 14px;
 }
 
 /* Buttons to add/save instructions are inline in a row below the table */
