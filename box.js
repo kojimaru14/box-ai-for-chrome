@@ -86,7 +86,7 @@ class BOX {
             })
         });
         const tokenData = await response.json();
-        this.saveTokens(tokenData);
+        await this.saveTokens(tokenData);
     }
 
     async getBoxAccessToken() {
