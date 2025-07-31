@@ -28,7 +28,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             request.finalFileName,
             request.selectionText,
             request.instruction,
-            request.model,
+            request.modelConfig,
             sender.tab
         );
     }
@@ -56,7 +56,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
                 finalFileName,
                 info.selectionText,
                 item.instruction,
-                item.model,
+                item.modelConfig,
                 tab
             );
         }
@@ -80,16 +80,16 @@ function sanitizeFilename(input) {
  * Ask Box AI with retry, showing banners, and optional model selection.
  * @param {string} fileId - The Box file ID to query.
  * @param {string} query - The prompt or instruction to send.
- * @param {string} [modelId] - Optional AI model ID to use.
+ * @param {string} [modelConfig] - Optional AI model ID to use.
  * @param {object} tab - The Chrome tab object for displaying banners.
  */
-async function askBoxAI(fileId, query, modelId, tab) {
+async function askBoxAI(fileId, query, modelConfig, tab) {
     let attempt = 0;
     const maxAttempts = 5;
     while (attempt < maxAttempts) {
         try {
             showBannerInTab(tab.id, "Asking Box AI...", "info");
-            const response = await boxClient.askBoxAI(fileId, query, modelId);
+            const response = await boxClient.askBoxAI(fileId, query, modelConfig);
 
             if (!response.ok) {
                 throw new Error(`Box AI API request failed: ${response.statusText}`);
@@ -107,7 +107,7 @@ async function askBoxAI(fileId, query, modelId, tab) {
 /**
  * Generic handler for Box AI requests with a custom instruction query.
  */
-async function handleBoxAIQuery(fileName, text, instructionQuery, modelId, tab) {
+async function handleBoxAIQuery(fileName, text, instructionQuery, modelConfig, tab) {
     showBannerInTab(tab.id, "Getting Box access token...", "info");
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
@@ -128,7 +128,7 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, modelId, tab) 
     }
     console.log('Box upload complete, file ID:', fileId);
     showBannerInTab(tab.id, "File uploaded to Box, asking Box AI...", "info");
-    const response = await askBoxAI(fileId, instructionQuery, modelId, tab);
+    const response = await askBoxAI(fileId, instructionQuery, modelConfig, tab);
     if (!response) {
         showBannerInTab(tab.id, "Failed to get response from Box AI.", "error");
         return console.error('Failed to get response from Box AI', response);

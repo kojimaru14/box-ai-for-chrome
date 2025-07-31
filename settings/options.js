@@ -101,6 +101,8 @@ document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAut
 // State for current custom instructions and editing
 let currentItems = [];
 let editingItemId = null;
+// Stores the system prompt template for the model selected in the modal
+let modalModelConfig = '';
 
 // Load models then initialize custom instructions UI
 (async () => {
@@ -199,7 +201,8 @@ function openEditModal(id) {
   editingItemId = id || crypto.randomUUID();
   const isNew = !id;
   document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
-  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '' };
+  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '', modelConfig: '' };
+  modalModelConfig = item.modelConfig || '';
   document.getElementById('modal-title').value = item.title;
   document.getElementById('modal-instruction').value = item.instruction;
   document.getElementById('modal-sortOrder').value = item.sortOrder;
@@ -220,6 +223,19 @@ function openEditModal(id) {
     }
   });
   modelSelect.value = item.model;
+  modelSelect.onchange = async e => {
+    const selectedModel = e.target.value;
+    if (selectedModel) {
+      try {
+        modalModelConfig = await boxClient.getAiAgentDefaultConfig(selectedModel) || '';
+      } catch (err) {
+        console.error(`Failed to load prompt template for model ${selectedModel}`, err);
+        modalModelConfig = '';
+      }
+    } else {
+      modalModelConfig = '';
+    }
+  };
   document.getElementById('instruction-modal').classList.remove('hidden');
 }
 
@@ -242,7 +258,7 @@ function onModalSave() {
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
   const model = document.getElementById('modal-model').value;
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
-  const item = { id: editingItemId, title, instruction, sortOrder, model };
+  const item = { id: editingItemId, title, instruction, sortOrder, model, modelConfig: modalModelConfig };
   if (existingIndex >= 0) {
     currentItems[existingIndex] = item;
   } else {
