@@ -79,6 +79,16 @@
     </select>
     <label for="modal-sortOrder">Sort Order</label>
     <input id="modal-sortOrder" type="number" min="0" />
+
+    <div class="form-check form-switch" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+      <input class="form-check-input" type="checkbox" id="advanced-options-toggle">
+      <label class="form-check-label" for="advanced-options-toggle">Advanced Options</label>
+    </div>
+      <div class="collapse" id="collapseExample">
+        <label for="modal-modelConfig">Model Config</label>
+        <textarea id="modal-modelConfig" rows="8"></textarea>
+      </div>
+
     <div class="modal-actions">
       <button id="modal-save" type="button">Save</button>
       <button id="modal-cancel" type="button">Cancel</button>
