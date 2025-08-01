@@ -93,9 +93,7 @@ document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAut
   })();
   checkbox.addEventListener('change', async (e) => {
     await chrome.storage.local.set({ BOX__DELETE_FILE_AFTER_COPY: e.target.checked });
-    const status = document.getElementById('cleanup-status');
-    status.textContent = 'Cleanup setting saved.';
-    setTimeout(() => { status.textContent = ''; }, 3000);
+    displayBanner('Cleanup setting saved.', 'success');
   });
 }
 
