@@ -78,9 +78,10 @@ Before using the extension, you must set up your Box API credentials and authori
   - `manifest.json`: Extension metadata and permissions.
   - `background.js`: Service worker handling context menus, Box API calls, and messaging.
   - `content.js`: Content script for banners and clipboard operations.
-  - `box.js`: Wrapper for Box OAuth, file uploads, and AI queries.
   - `popup/`: Popup UI for opening Options.
   - `settings/`: Options page UI and default configuration.
+  - `utils/`: Shared utility scripts, including the Box API wrapper (`box.js`) and banner notifications (`banner.js`).
+  - `vendor/`: Third-party libraries like Bootstrap and Box UI Elements.
   - `zip-extension.sh`: Script for creating a ZIP package (for Chrome Web Store upload). Usage: run this at the root of the repository
       ```bash
       ./zip-extension.sh [output-name.zip]
