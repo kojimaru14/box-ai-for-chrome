@@ -232,8 +232,29 @@ function createInstructionRow(item) {
   removeButton.appendChild(svgRemove);
 
   removeButton.addEventListener('click', () => {
-    currentItems = currentItems.filter(i => i.id !== item.id);
-    renderInstructionsTable(currentItems);
+    const confirmModal = document.getElementById('confirm-modal');
+    confirmModal.classList.remove('hidden');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+
+    const onConfirm = async () => {
+      currentItems = currentItems.filter(i => i.id !== item.id);
+      await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+      displayBanner('Instruction removed.', 'success');
+      renderInstructionsTable(currentItems);
+      confirmModal.classList.add('hidden');
+      confirmDeleteBtn.removeEventListener('click', onConfirm);
+      cancelDeleteBtn.removeEventListener('click', onCancel);
+    };
+
+    const onCancel = () => {
+      confirmModal.classList.add('hidden');
+      confirmDeleteBtn.removeEventListener('click', onConfirm);
+      cancelDeleteBtn.removeEventListener('click', onCancel);
+    };
+
+    confirmDeleteBtn.addEventListener('click', onConfirm);
+    cancelDeleteBtn.addEventListener('click', onCancel);
   });
   actionsTd.appendChild(editButton);
   actionsTd.appendChild(removeButton);
