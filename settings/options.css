@@ -38,60 +38,6 @@ h1 {
     margin-bottom: 15px;
     color: #1c1e21;
 }
-.tooltip {
-    position: relative;
-    top: -2px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 3px;
-    height: 7px;
-    margin-left: 6px;
-    background-color: #606770;
-    color: #fff;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 10px;
-    line-height: 1;
-}
-
-/* Tooltip bubble styling */
-.tooltip .tooltip-text {
-    visibility: hidden;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    text-align: left;
-    border-radius: 4px;
-    padding: 6px 8px;
-    position: absolute;
-    z-index: 1000;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    width: 200px;
-    /* max-width: 220px; */
-    font-size: 12px;
-    line-height: 1.4;
-    white-space: normal;
-}
-
-.tooltip .tooltip-text::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-}
-
-.tooltip:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
-}
 
 button {
     background-color: #1877f2;
