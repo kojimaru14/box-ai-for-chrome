@@ -93,9 +93,7 @@ document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAut
   })();
   checkbox.addEventListener('change', async (e) => {
     await chrome.storage.local.set({ BOX__DELETE_FILE_AFTER_COPY: e.target.checked });
-    const status = document.getElementById('cleanup-status');
-    status.textContent = 'Cleanup setting saved.';
-    setTimeout(() => { status.textContent = ''; }, 3000);
+    displayBanner('Cleanup setting saved.', 'success');
   });
 }
 
@@ -114,7 +112,6 @@ let modalPreviousModel = '';
   initCustomInstructions();
 })();
 document.getElementById('add-instruction').addEventListener('click', () => openEditModal());
-document.getElementById('save-instructions').addEventListener('click', onSaveInstructions);
 
 // Modal event handlers
 document.getElementById('modal-save').addEventListener('click', onModalSave);
@@ -181,16 +178,82 @@ function createInstructionRow(item) {
   orderTd.textContent = item.sortOrder;
 
   const actionsTd = document.createElement('td');
+  
+  // Define the SVG namespace
+  const svgNS = 'http://www.w3.org/2000/svg';
+
   const editButton = document.createElement('button');
   editButton.type = 'button';
-  editButton.textContent = 'Edit';
+  editButton.title = 'Edit';
+
+  // Create the SVG element
+  const svgEdit = document.createElementNS(svgNS, 'svg');
+  svgEdit.setAttribute('width', '16');
+  svgEdit.setAttribute('height', '16');
+  svgEdit.setAttribute('viewBox', '0 0 16 16');
+  svgEdit.setAttribute('fill', 'currentColor');
+
+  // Create a path element for the icon (example: a simple circle)
+  const pathEdit = document.createElementNS(svgNS, 'path');
+  pathEdit.setAttribute('d', 'm13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z');
+  // Append the path to the SVG
+  svgEdit.appendChild(pathEdit);
+
+  // Append the SVG to the button
+  editButton.appendChild(svgEdit);
+
+  // Append the button to the document body (or another desired element)
+  document.body.appendChild(editButton);
+
   editButton.addEventListener('click', () => openEditModal(item.id));
+
   const removeButton = document.createElement('button');
   removeButton.type = 'button';
-  removeButton.textContent = 'Remove';
+  removeButton.title = 'Remove';
+
+  // Create the SVG element
+  const svgRemove = document.createElementNS(svgNS, 'svg');
+  svgRemove.setAttribute('width', '16');
+  svgRemove.setAttribute('height', '16');
+  svgRemove.setAttribute('viewBox', '0 0 16 16');
+  svgRemove.setAttribute('fill', 'currentColor');
+
+  // Create a path element for the icon (example: a simple circle)
+  const pathRemove1 = document.createElementNS(svgNS, 'path');
+  pathRemove1.setAttribute('d', 'M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z')
+  const pathRemove2 = document.createElementNS(svgNS, 'path');
+  pathRemove2.setAttribute('d', 'M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z');
+  // Append the path to the SVG
+  svgRemove.appendChild(pathRemove1);
+  svgRemove.appendChild(pathRemove2);
+
+  // Append the SVG to the button
+  removeButton.appendChild(svgRemove);
+
   removeButton.addEventListener('click', () => {
-    currentItems = currentItems.filter(i => i.id !== item.id);
-    renderInstructionsTable(currentItems);
+    const confirmModal = document.getElementById('confirm-modal');
+    confirmModal.classList.remove('hidden');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+
+    const onConfirm = async () => {
+      currentItems = currentItems.filter(i => i.id !== item.id);
+      await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+      displayBanner('Instruction removed.', 'success');
+      renderInstructionsTable(currentItems);
+      confirmModal.classList.add('hidden');
+      confirmDeleteBtn.removeEventListener('click', onConfirm);
+      cancelDeleteBtn.removeEventListener('click', onCancel);
+    };
+
+    const onCancel = () => {
+      confirmModal.classList.add('hidden');
+      confirmDeleteBtn.removeEventListener('click', onConfirm);
+      cancelDeleteBtn.removeEventListener('click', onCancel);
+    };
+
+    confirmDeleteBtn.addEventListener('click', onConfirm);
+    cancelDeleteBtn.addEventListener('click', onCancel);
   });
   actionsTd.appendChild(editButton);
   actionsTd.appendChild(removeButton);
@@ -240,22 +303,6 @@ async function openEditModal(id) {
   const saveBtn = document.getElementById('modal-save');
   saveBtn.disabled = false;
   document.getElementById('instruction-modal').classList.remove('hidden');
-}
-
-/**
- * Persist all instructions to storage.
- */
-async function onSaveInstructions() {
-  try {
-    await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-    displayBanner('Instructions saved.', 'success');
-    const status = document.getElementById('instructions-status');
-    status.textContent = 'Instructions saved.';
-    setTimeout(() => { status.textContent = ''; }, 3000);
-  } catch (err) {
-    console.error('Failed to save instructions', err);
-    displayBanner('Failed to save instructions.', 'error');
-  }
 }
 
 /**
@@ -310,3 +357,8 @@ function closeModal() {
   document.getElementById('instruction-modal').classList.add('hidden');
   editingItemId = null;
 }
+
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+})

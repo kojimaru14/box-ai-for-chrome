@@ -2,8 +2,9 @@
 <html>
 <head>
   <title>Box AI for Chrome Options</title>
-  <link rel="stylesheet" href="box-ui-elements/picker.css" />
+  <link rel="stylesheet" href="bootstrap-5.3.0-dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="options.css" />
+  <link rel="stylesheet" href="box-ui-elements/picker.css" />
 </head>
 <body>
   <div class="container">
@@ -18,20 +19,20 @@
     <div class="setting-card">
       <h2>
         Upload Destination
-        <span class="tooltip">i
-          <span class="tooltip-text">Press Enter to navigate into the selected directory. Simply selecting a folder won't enter it.</span>
-        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16" data-bs-toggle="tooltip" data-placement="top" data-bs-title="Press Enter to navigate into the selected directory. Simply selecting a folder won't enter it.">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+          <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+        </svg>
       </h2>
       <div class="picker"><button type="button">Select Folder</button></div>
       <div id="selected-folder">No folder selected.</div>
-      <label class="cleanup-checkbox-label">
-        <input type="checkbox" id="BOX__DELETE_FILE_AFTER_COPY" />
-        Delete uploaded file from Box after copying AI response
-      </label>
-      <div id="cleanup-status"></div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="" id="BOX__DELETE_FILE_AFTER_COPY">
+        <label class="form-check-label" for="BOX__DELETE_FILE_AFTER_COPY">
+          Delete uploaded file from Box after copying AI response
+        </label>
+      </div>
     </div>
-
-    <div id="folder-picker-container"></div>
 
     <div class="setting-card">
       <h2>Custom Instructions</h2>
@@ -49,8 +50,12 @@
         <tbody></tbody>
       </table>
       <div class="table-actions">
-        <button id="add-instruction" type="button">Add Instruction</button>
-        <button id="save-instructions" type="button">Save Instructions</button>
+        <button id="add-instruction" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+          </svg>
+          Add Instruction
+        </button>
       </div>
       <div id="instructions-status"></div>
     </div>
@@ -75,11 +80,25 @@
     <label for="modal-sortOrder">Sort Order</label>
     <input id="modal-sortOrder" type="number" min="0" />
     <div class="modal-actions">
-      <button id="modal-save" type="button">OK</button>
+      <button id="modal-save" type="button">Save</button>
       <button id="modal-cancel" type="button">Cancel</button>
     </div>
   </div>
 </div>
+
+<!-- Confirm Deletion Modal -->
+<div id="confirm-modal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Confirm Deletion</h3>
+    <p>Are you sure you want to delete this instruction?</p>
+    <div class="modal-actions">
+      <button id="confirm-delete" type="button">Delete</button>
+      <button id="cancel-delete" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="bootstrap-5.3.0-dist/js/bootstrap.bundle.min.js"></script>
 <script type="module" src="options.js"></script>
 </body>
 </html>
