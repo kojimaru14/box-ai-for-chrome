@@ -1,6 +1,6 @@
-import BOX from './box.js';
+import BOX from './utils/box.js';
 import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from './settings/config.js';
-import { displayBanner } from './settings/banner.js';
+import { displayBanner } from './utils/banner.js';
 
 const boxClient = new BOX( { BOX__CLIENT_ID, BOX__CLIENT_SECRET });
 const CUSTOM_INSTRUCTION_ID = 'BOX_AI_CUSTOM_INSTRUCTION';
