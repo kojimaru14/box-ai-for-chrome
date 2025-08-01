@@ -112,7 +112,6 @@ let modalPreviousModel = '';
   initCustomInstructions();
 })();
 document.getElementById('add-instruction').addEventListener('click', () => openEditModal());
-document.getElementById('save-instructions').addEventListener('click', onSaveInstructions);
 
 // Modal event handlers
 document.getElementById('modal-save').addEventListener('click', onModalSave);
@@ -304,22 +303,6 @@ async function openEditModal(id) {
   const saveBtn = document.getElementById('modal-save');
   saveBtn.disabled = false;
   document.getElementById('instruction-modal').classList.remove('hidden');
-}
-
-/**
- * Persist all instructions to storage.
- */
-async function onSaveInstructions() {
-  try {
-    await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-    displayBanner('Instructions saved.', 'success');
-    const status = document.getElementById('instructions-status');
-    status.textContent = 'Instructions saved.';
-    setTimeout(() => { status.textContent = ''; }, 3000);
-  } catch (err) {
-    console.error('Failed to save instructions', err);
-    displayBanner('Failed to save instructions.', 'error');
-  }
 }
 
 /**
