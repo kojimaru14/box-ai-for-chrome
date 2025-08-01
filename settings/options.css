@@ -78,15 +78,10 @@ button:hover {
     margin-top: 20px;
 }
 
-label.cleanup-checkbox-label {
+.form-check {
     display: block;
-    margin: 15px 0;
+    margin-top: 15px;
     font-size: 14px;
-    color: #606770;
-}
-label.cleanup-checkbox-label input {
-    margin-right: 8px;
-    vertical-align: text-bottom;
 }
 
 #custom-instructions-table {
