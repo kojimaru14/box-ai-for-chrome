@@ -1,7 +1,7 @@
 import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from './config.js';
-import BOX from '../box.js';
-import { displayBanner } from './banner.js';
-import './box-ui-elements/picker.js';
+import BOX from '../utils/box.js';
+import { displayBanner } from '../utils/banner.js';
+import '../vendor/box-ui-elements/picker.js';
 
 // Load available AI models for selection
 let models = [];
