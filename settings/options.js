@@ -121,7 +121,7 @@ async function initCustomInstructions() {
   const { BOX__CUSTOM_INSTRUCTIONS: stored = [] } = await chrome.storage.local.get({ BOX__CUSTOM_INSTRUCTIONS: [] });
   // Normalize language (default to English) on load
   const source = stored.length > 0 ? stored : defaultCustomInstructions;
-  const items = source.map(item => ({ ...item, language: item.language || 'en' }));
+  const items = source.map(item => ({ ...item, language: item.language || 'en', enabled: item.enabled === false ? false : true }));
   currentItems = items;
   renderInstructionsTable(currentItems);
 }
@@ -219,6 +219,19 @@ function createInstructionRow(item) {
   const orderTd = document.createElement('td');
   orderTd.textContent = item.sortOrder;
 
+  const enabledTd = document.createElement('td');
+  const enabledCb = document.createElement('input');
+  enabledCb.type = 'checkbox';
+  enabledCb.checked = item.enabled;
+  enabledCb.addEventListener('change', async (e) => {
+      const id = e.target.closest('tr').dataset.id;
+      const currentItem = currentItems.find(i => i.id === id);
+      currentItem.enabled = e.target.checked;
+      await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+      displayBanner(`Instruction ${e.target.checked ? 'enabled' : 'disabled'}`, 'success');
+  });
+  enabledTd.appendChild(enabledCb);
+
   const actionsTd = document.createElement('td');
 
   const editButton = document.createElement('button');
@@ -241,6 +254,7 @@ function createInstructionRow(item) {
   actionsTd.appendChild(editButton);
   actionsTd.appendChild(removeButton);
 
+  tr.appendChild(enabledTd);
   tr.appendChild(titleTd);
   tr.appendChild(instrTd);
   tr.appendChild(modelTd);
@@ -258,13 +272,14 @@ async function openEditModal(id) {
   editingItemId = id || crypto.randomUUID();
   const isNew = !id;
   document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
-  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '', modelConfig: '' };
+  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '', modelConfig: '', enabled: true };
   modalModelConfig = item.modelConfig || '';
   // Initialize previous model for potential revert on failure
   modalPreviousModel = item.model || '';
   document.getElementById('modal-title').value = item.title;
   document.getElementById('modal-instruction').value = item.instruction;
   document.getElementById('modal-sortOrder').value = item.sortOrder;
+  document.getElementById('modal-enabled').checked = item.enabled;
   document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
   // Populate model select options
   const modelSelect = document.getElementById('modal-model');
@@ -345,6 +360,7 @@ async function onModalSave() {
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
   const model = document.getElementById('modal-model').value;
   const language = document.getElementById('modal-language').value;
+  const enabled = document.getElementById('modal-enabled').checked;
   const modelConfigValue = document.getElementById('modal-modelConfig').value;
   console.log(`Saving instruction for model: ${model}, language: ${language}`);
 
@@ -357,7 +373,7 @@ async function onModalSave() {
   modalModelConfig = modelConfig;
 
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
-  const item = { id: editingItemId, title, instruction, sortOrder, model, language, modelConfig: modalModelConfig };
+  const item = { id: editingItemId, title, instruction, sortOrder, model, language, enabled, modelConfig: modalModelConfig };
   if (existingIndex >= 0) {
     currentItems[existingIndex] = item;
   } else {

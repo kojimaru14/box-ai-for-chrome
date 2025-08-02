@@ -161,6 +161,7 @@ async function initializeContextMenus() {
     const { BOX__CUSTOM_INSTRUCTIONS: stored = [] } = await chrome.storage.local.get('BOX__CUSTOM_INSTRUCTIONS');
     const instructions = stored.length > 0 ? stored : defaultCustomInstructions;
     instructions
+        .filter(item => item.enabled !== false) // Filter out disabled items
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .forEach(item => {
             chrome.contextMenus.create({
