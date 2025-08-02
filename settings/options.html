@@ -39,6 +39,7 @@
       <table id="custom-instructions-table">
         <thead>
         <tr>
+          <th>Show</th>
           <th>Title</th>
           <th>Instruction</th>
           <th>Model</th>
@@ -78,6 +79,13 @@
     </select>
     <label for="modal-sortOrder">Sort Order</label>
     <input id="modal-sortOrder" type="number" min="0" />
+    <!-- Hidden checkbox for enabling/disabling the instruction -->
+    <div class="form-check" hidden>
+      <input class="form-check-input" type="checkbox" value="" id="modal-enabled">
+      <label class="form-check-label" for="modal-enabled">
+        Show
+      </label>
+    </div>
 
     <div class="form-check form-switch" data-bs-toggle="collapse" data-bs-target="#collapseTextArea" aria-expanded="false" aria-controls="collapseTextArea">
       <input class="form-check-input" type="checkbox" id="advanced-options-toggle">
