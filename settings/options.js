@@ -1,4 +1,4 @@
-import { defaultCustomInstructions, CUSTOM_INSTRUCTION_ID } from './config.js';
+import { defaultCustomInstructions } from './config.js';
 import BOX from '../utils/box.js';
 import { displayBanner } from '../utils/banner.js';
 import '../vendor/box-ui-elements/picker.js';
@@ -252,7 +252,7 @@ function createInstructionRow(item) {
   removeButton.addEventListener('click', () => confirmAndDelete(item));
 
   actionsTd.appendChild(editButton);
-  if (item.id !== CUSTOM_INSTRUCTION_ID) actionsTd.appendChild(removeButton);
+  actionsTd.appendChild(removeButton);
 
   tr.appendChild(enabledTd);
   tr.appendChild(titleTd);

@@ -1,5 +1,5 @@
 import BOX from './utils/box.js';
-import { defaultCustomInstructions, CUSTOM_INSTRUCTION_ID } from './settings/config.js';
+import { defaultCustomInstructions } from './settings/config.js';
 import { displayBanner } from './utils/banner.js';
 
 const boxClient = new BOX();
@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message in background script:', request);
     if (request.type === "displayBanner" && sender.tab) {
         showBannerInTab(sender.tab.id, request.message, request.bannerType);
-    } else if (request.type === CUSTOM_INSTRUCTION_ID && sender.tab) {
+    } else if (request.type === 'BOX_AI_CUSTOM_INSTRUCTION_PROMPT' && sender.tab) {
         handleBoxAIQuery(
             request.finalFileName,
             request.selectionText,
@@ -43,7 +43,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             stored.find(i => i.id === info.menuItemId) ||
             defaultCustomInstructions.find(i => i.id === info.menuItemId);
         if (item) {
-            if (item.id === CUSTOM_INSTRUCTION_ID) {
+            if (!item.instruction) {
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     function: promptForCustomInstructionAndSendMessage,
@@ -240,7 +240,7 @@ function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, 
         return;
     }
     chrome.runtime.sendMessage({
-        type: 'BOX_AI_CUSTOM_INSTRUCTION',
+        type: 'BOX_AI_CUSTOM_INSTRUCTION_PROMPT',
         instruction,
         selectionText,
         finalFileName,
