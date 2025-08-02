@@ -15,14 +15,12 @@ const boxClient = new BOX({ BOX__CLIENT_ID, BOX__CLIENT_SECRET });
 const { FolderPicker } = Box;
 
 async function loginBoxOAuth() {
-    const clientId = BOX__CLIENT_ID;
-    const clientSecret = BOX__CLIENT_SECRET;
     const redirectUri = chrome.identity.getRedirectURL();
-    const authUrl = `https://account.box.com/api/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const authUrl = boxClient.getAuthorizeURL(redirectUri);
     chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, async (redirectedTo) => {
         const params = new URLSearchParams(new URL(redirectedTo).search);
         const code = params.get('code');
-        await boxClient.getTokensAuthorizationCodeGrant(code, clientId, clientSecret, redirectUri);
+        await boxClient.getTokensAuthorizationCodeGrant(code, redirectUri);
         const userInfo = await boxClient.getUser();
         document.getElementById('status').textContent = `Logged in as ${userInfo.name} (${userInfo.login})`;
         await initializeFolderPicker();

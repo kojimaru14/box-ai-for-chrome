@@ -1,5 +1,6 @@
 const BOX_API_URL = "https://api.box.com/2.0";
 const BOX_OAUTH_URL = "https://api.box.com/oauth2";
+const BOX_AUTHROIZE_URL = "https://account.box.com/api/oauth2/authorize";
 const BOX_UPLOAD_URL = "https://upload.box.com/api/2.0";
 
 class BOX {
@@ -76,6 +77,10 @@ class BOX {
         return JSON.parse(dec.decode(plainBuffer));
     }
 
+    getAuthorizeURL(redirectUri) {
+        return `${BOX_AUTHROIZE_URL}?response_type=code&client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    }
+
     async #apiRequest(endpoint, options = {}, baseUrl = BOX_API_URL) {
         const accessToken = await this.getBoxAccessToken();
         if (!accessToken) {
@@ -97,15 +102,15 @@ class BOX {
         return response;
     }
 
-    async getTokensAuthorizationCodeGrant(code, clientId, clientSecret, redirectUri) {
+    async getTokensAuthorizationCodeGrant(code, redirectUri) {
         const response = await fetch(`${BOX_OAUTH_URL}/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 grant_type: 'authorization_code',
                 code: code,
-                client_id: clientId,
-                client_secret: clientSecret,
+                client_id: this.clientId,
+                client_secret: this.clientSecret,
                 redirect_uri: redirectUri,
             })
         });
