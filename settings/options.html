@@ -57,7 +57,6 @@
           Add Instruction
         </button>
       </div>
-      <div id="instructions-status"></div>
     </div>
   </div>
 </div>
@@ -79,6 +78,16 @@
     </select>
     <label for="modal-sortOrder">Sort Order</label>
     <input id="modal-sortOrder" type="number" min="0" />
+
+    <div class="form-check form-switch" data-bs-toggle="collapse" data-bs-target="#collapseTextArea" aria-expanded="false" aria-controls="collapseTextArea">
+      <input class="form-check-input" type="checkbox" id="advanced-options-toggle">
+      <label class="form-check-label" for="advanced-options-toggle">Show advanced options</label>
+    </div>
+      <div class="collapse" id="collapseTextArea">
+        <label for="modal-modelConfig">Agent Config</label>
+        <textarea id="modal-modelConfig" rows="8"></textarea>
+      </div>
+
     <div class="modal-actions">
       <button id="modal-save" type="button">Save</button>
       <button id="modal-cancel" type="button">Cancel</button>

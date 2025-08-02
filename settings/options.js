@@ -101,7 +101,6 @@ document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAut
 let currentItems = [];
 let editingItemId = null;
 // Stores the system prompt template for the model selected in the modal
-// Stores the system prompt template for the model selected in the modal
 let modalModelConfig = '';
 // Stores the previously-selected model in the modal (for revert on failure)
 let modalPreviousModel = '';
@@ -209,7 +208,7 @@ function createInstructionRow(item) {
 
   const removeButton = document.createElement('button');
   removeButton.type = 'button';
-  removeButton.title = 'Remove';
+  removeButton.title = 'Delete';
 
   // Create the SVG element
   const svgRemove = document.createElementNS(svgNS, 'svg');
@@ -282,6 +281,7 @@ async function openEditModal(id) {
   document.getElementById('modal-title').value = item.title;
   document.getElementById('modal-instruction').value = item.instruction;
   document.getElementById('modal-sortOrder').value = item.sortOrder;
+  document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
   // Populate model select options
   const modelSelect = document.getElementById('modal-model');
   modelSelect.innerHTML = '';
@@ -298,7 +298,7 @@ async function openEditModal(id) {
       modelSelect.appendChild(opt);
     }
   });
-  modelSelect.value = item.model;
+  modelSelect.value = item.model || '';
   document.getElementById('modal-language').value = item.language || 'en';
   const saveBtn = document.getElementById('modal-save');
   saveBtn.disabled = false;
@@ -316,9 +316,26 @@ async function onModalSave() {
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
   const model = document.getElementById('modal-model').value;
   const language = document.getElementById('modal-language').value;
-  // Ensure the prompt template is fresh before saving
-  if (model) {
+  const modelConfig = document.getElementById('modal-modelConfig').value;
+  console.log(`Saving instruction for model: ${model}, language: ${language}`);
+  // If modelConfig is present, save it directly
+  if( modelConfig ) {
     try {
+      modalModelConfig = JSON.parse(modelConfig);
+    } catch (err) {
+      displayBanner(`Invalid JSON in Model Config field`, 'error');
+      saveBtn.disabled = false;
+      return;
+    }
+  } 
+  // If both model and language are default, then set modalModelConfig empty (which means default AI agent is used for AI query)
+  else if ( !model && language === 'en' ) { 
+    modalModelConfig = '';
+  } 
+  // If modelConfig is empty although model is selected, then fetch the default config for that model
+  else {
+    try {
+      displayBanner(`Fetching model config for ${model?model:"Default"}.`, 'info');
       modalModelConfig = await boxClient.getAiAgentDefaultConfig(model, language) || '';
     } catch (err) {
       console.error(`Failed to load prompt template for model ${model}`, err);
@@ -326,9 +343,8 @@ async function onModalSave() {
       saveBtn.disabled = false;
       return;
     }
-  } else {
-    modalModelConfig = '';
   }
+
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
   const item = { id: editingItemId, title, instruction, sortOrder, model, language, modelConfig: modalModelConfig };
   if (existingIndex >= 0) {
@@ -338,13 +354,10 @@ async function onModalSave() {
   }
   try {
     await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-    displayBanner('Instructions saved.', 'success');
-    const status = document.getElementById('instructions-status');
-    status.textContent = 'Instructions saved.';
-    setTimeout(() => { status.textContent = ''; }, 3000);
+    displayBanner('Instruction saved.', 'success');
   } catch (err) {
-    console.error('Failed to save instructions', err);
-    displayBanner('Failed to save instructions.', 'error');
+    console.error('Failed to save instruction', err);
+    displayBanner('Failed to save instruction.', 'error');
   }
   renderInstructionsTable(currentItems);
   closeModal();
@@ -362,3 +375,44 @@ var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggl
 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
   return new bootstrap.Tooltip(tooltipTriggerEl)
 })
+
+// When the model selection changes, update the prompt template
+document.getElementById('modal-model').addEventListener('change', async (e) => {
+  const modelId = e.target.value;
+  const language = document.getElementById('modal-language').value;
+  const saveBtn = document.getElementById('modal-save');
+  saveBtn.disabled = true;
+  try {
+    displayBanner(`Fetching model config for ${modelId}.`, 'info');
+    modalModelConfig = await boxClient.getAiAgentDefaultConfig(modelId, language) || '';
+    displayBanner(`Model config for ${modelId} fetched`, 'success');
+  } catch (err) {
+    console.error(`Failed to load prompt template for model ${modelId}`, err);
+    displayBanner(`Failed to load prompt template for model ${modelId}.`, 'error');
+    // Revert to previous model on failure
+    e.target.value = modalPreviousModel;
+  }
+  modalPreviousModel = e.target.value;
+  document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
+  saveBtn.disabled = false;
+});
+
+document.getElementById('modal-language').addEventListener('change', async (e) => {
+  const language = e.target.value;
+  const modelId = document.getElementById('modal-model').value;
+  const saveBtn = document.getElementById('modal-save');
+  saveBtn.disabled = true;
+  try {
+    displayBanner(`Fetching model config for ${modelId}.`, 'info');
+    modalModelConfig = await boxClient.getAiAgentDefaultConfig(modelId, language) || '';
+    displayBanner(`Model config for ${modelId} fetched`, 'success');
+  } catch (err) {
+    console.error(`Failed to load prompt template for model ${modelId}`, err);
+    displayBanner(`Failed to load prompt template for model ${modelId}.`, 'error');
+    // Revert to previous model on failure
+    e.target.value = modalPreviousModel;
+  }
+  modalPreviousModel = e.target.value;
+  document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
+  saveBtn.disabled = false;
+});
