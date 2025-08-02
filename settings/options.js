@@ -252,7 +252,7 @@ function createInstructionRow(item) {
   removeButton.addEventListener('click', () => confirmAndDelete(item));
 
   actionsTd.appendChild(editButton);
-  actionsTd.appendChild(removeButton);
+  if (item.id !== 'BOX_AI_CUSTOM_INSTRUCTION') actionsTd.appendChild(removeButton);
 
   tr.appendChild(enabledTd);
   tr.appendChild(titleTd);
