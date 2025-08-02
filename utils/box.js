@@ -1,3 +1,5 @@
+import { BOX__CLIENT_ID, BOX__CLIENT_SECRET } from '../settings/config.js';
+
 const BOX_API_URL = "https://api.box.com/2.0";
 const BOX_OAUTH_URL = "https://api.box.com/oauth2";
 const BOX_AUTHROIZE_URL = "https://account.box.com/api/oauth2/authorize";
@@ -6,17 +8,17 @@ const BOX_UPLOAD_URL = "https://upload.box.com/api/2.0";
 class BOX {
     #LOGHEADER = "[BOX]"; // Header for logging
 
-    constructor(config) {
-        this.initialize(config);
+    constructor() {
+        this.initialize();
         console.log(`${this.#LOGHEADER} Initializing...`);
     }
 
-    initialize(config) {
-        if (!config || !config.BOX__CLIENT_ID || !config.BOX__CLIENT_SECRET) {
+    initialize() {
+        if (!BOX__CLIENT_ID || !BOX__CLIENT_SECRET) {
             throw new Error(`${this.#LOGHEADER} Missing Box client ID or secret in config.`);
         }
-        this.clientId = config.BOX__CLIENT_ID;
-        this.clientSecret = config.BOX__CLIENT_SECRET;
+        this.clientId = BOX__CLIENT_ID;
+        this.clientSecret = BOX__CLIENT_SECRET;
         console.log(`${this.#LOGHEADER} Configuration initialized with client ID: ${this.clientId}`);
     }
 

@@ -1,4 +1,4 @@
-import { BOX__CLIENT_ID, BOX__CLIENT_SECRET, defaultCustomInstructions } from './config.js';
+import { defaultCustomInstructions } from './config.js';
 import BOX from '../utils/box.js';
 import { displayBanner } from '../utils/banner.js';
 import '../vendor/box-ui-elements/picker.js';
@@ -11,7 +11,7 @@ async function loadModels() {
   models = edges.map(edge => edge.node);
 }
 
-const boxClient = new BOX({ BOX__CLIENT_ID, BOX__CLIENT_SECRET });
+const boxClient = new BOX();
 const { FolderPicker } = Box;
 
 async function loginBoxOAuth() {
