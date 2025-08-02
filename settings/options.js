@@ -146,6 +146,51 @@ function truncateText(str, maxChars = 170) {
   return str.length > maxChars ? str.slice(0, maxChars) + '…' : str;
 }
 
+function createSvgIcon(paths) {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '16');
+    svg.setAttribute('height', '16');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('fill', 'currentColor');
+
+    paths.forEach(pathData => {
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', pathData);
+        svg.appendChild(path);
+    });
+
+    return svg;
+}
+
+function confirmAndDelete(item) {
+    const confirmModal = document.getElementById('confirm-modal');
+    confirmModal.classList.remove('hidden');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+
+    const onConfirm = async () => {
+      currentItems = currentItems.filter(i => i.id !== item.id);
+      await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
+      displayBanner('Instruction removed.', 'success');
+      renderInstructionsTable(currentItems);
+      cleanup();
+    };
+
+    const onCancel = () => {
+      cleanup();
+    };
+
+    function cleanup() {
+        confirmModal.classList.add('hidden');
+        confirmDeleteBtn.removeEventListener('click', onConfirm);
+        cancelDeleteBtn.removeEventListener('click', onCancel);
+    }
+
+    confirmDeleteBtn.addEventListener('click', onConfirm);
+    cancelDeleteBtn.addEventListener('click', onCancel);
+}
+
 /**
  * Create a table row for a custom instruction.
  * @param {Object} item
@@ -177,83 +222,24 @@ function createInstructionRow(item) {
   orderTd.textContent = item.sortOrder;
 
   const actionsTd = document.createElement('td');
-  
-  // Define the SVG namespace
-  const svgNS = 'http://www.w3.org/2000/svg';
 
   const editButton = document.createElement('button');
   editButton.type = 'button';
   editButton.title = 'Edit';
-
-  // Create the SVG element
-  const svgEdit = document.createElementNS(svgNS, 'svg');
-  svgEdit.setAttribute('width', '16');
-  svgEdit.setAttribute('height', '16');
-  svgEdit.setAttribute('viewBox', '0 0 16 16');
-  svgEdit.setAttribute('fill', 'currentColor');
-
-  // Create a path element for the icon (example: a simple circle)
-  const pathEdit = document.createElementNS(svgNS, 'path');
-  pathEdit.setAttribute('d', 'm13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z');
-  // Append the path to the SVG
-  svgEdit.appendChild(pathEdit);
-
-  // Append the SVG to the button
-  editButton.appendChild(svgEdit);
-
-  // Append the button to the document body (or another desired element)
-  document.body.appendChild(editButton);
-
+  const editIcon = createSvgIcon(['m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z']);
+  editButton.appendChild(editIcon);
   editButton.addEventListener('click', () => openEditModal(item.id));
 
   const removeButton = document.createElement('button');
   removeButton.type = 'button';
   removeButton.title = 'Delete';
+  const removeIcon = createSvgIcon([
+      'M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z',
+      'M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z'
+  ]);
+  removeButton.appendChild(removeIcon);
+  removeButton.addEventListener('click', () => confirmAndDelete(item));
 
-  // Create the SVG element
-  const svgRemove = document.createElementNS(svgNS, 'svg');
-  svgRemove.setAttribute('width', '16');
-  svgRemove.setAttribute('height', '16');
-  svgRemove.setAttribute('viewBox', '0 0 16 16');
-  svgRemove.setAttribute('fill', 'currentColor');
-
-  // Create a path element for the icon (example: a simple circle)
-  const pathRemove1 = document.createElementNS(svgNS, 'path');
-  pathRemove1.setAttribute('d', 'M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z')
-  const pathRemove2 = document.createElementNS(svgNS, 'path');
-  pathRemove2.setAttribute('d', 'M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z');
-  // Append the path to the SVG
-  svgRemove.appendChild(pathRemove1);
-  svgRemove.appendChild(pathRemove2);
-
-  // Append the SVG to the button
-  removeButton.appendChild(svgRemove);
-
-  removeButton.addEventListener('click', () => {
-    const confirmModal = document.getElementById('confirm-modal');
-    confirmModal.classList.remove('hidden');
-    const confirmDeleteBtn = document.getElementById('confirm-delete');
-    const cancelDeleteBtn = document.getElementById('cancel-delete');
-
-    const onConfirm = async () => {
-      currentItems = currentItems.filter(i => i.id !== item.id);
-      await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-      displayBanner('Instruction removed.', 'success');
-      renderInstructionsTable(currentItems);
-      confirmModal.classList.add('hidden');
-      confirmDeleteBtn.removeEventListener('click', onConfirm);
-      cancelDeleteBtn.removeEventListener('click', onCancel);
-    };
-
-    const onCancel = () => {
-      confirmModal.classList.add('hidden');
-      confirmDeleteBtn.removeEventListener('click', onConfirm);
-      cancelDeleteBtn.removeEventListener('click', onCancel);
-    };
-
-    confirmDeleteBtn.addEventListener('click', onConfirm);
-    cancelDeleteBtn.addEventListener('click', onCancel);
-  });
   actionsTd.appendChild(editButton);
   actionsTd.appendChild(removeButton);
 
@@ -305,6 +291,51 @@ async function openEditModal(id) {
   document.getElementById('instruction-modal').classList.remove('hidden');
 }
 
+async function updateModelConfig(modelId, language) {
+  const saveBtn = document.getElementById('modal-save');
+  saveBtn.disabled = true;
+  try {
+    displayBanner(`Fetching model config for ${modelId}.`, 'info');
+    modalModelConfig = await boxClient.getAiAgentDefaultConfig(modelId, language) || '';
+    displayBanner(`Model config for ${modelId} fetched`, 'success');
+  } catch (err) {
+    console.error(`Failed to load prompt template for model ${modelId}`, err);
+    displayBanner(`Failed to load prompt template for model ${modelId}.`, 'error');
+    // Revert to previous model on failure
+    document.getElementById('modal-model').value = modalPreviousModel;
+  }
+  modalPreviousModel = document.getElementById('modal-model').value;
+  document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
+  saveBtn.disabled = false;
+}
+
+async function getModalConfig(model, language, modelConfig) {
+    const saveBtn = document.getElementById('modal-save');
+    if (modelConfig) {
+        try {
+            return JSON.parse(modelConfig);
+        } catch (err) {
+            displayBanner(`Invalid JSON in Model Config field`, 'error');
+            saveBtn.disabled = false;
+            return null;
+        }
+    }
+    // If both model and language are default, then set modalModelConfig empty (which means default AI agent is used for AI query)
+    if (!model && language === 'en') {
+        return '';
+    }
+    // If modelConfig is empty although model is selected, then fetch the default config for that model
+    try {
+        displayBanner(`Fetching model config for ${model ? model : "Default"}.`, 'info');
+        return await boxClient.getAiAgentDefaultConfig(model, language) || '';
+    } catch (err) {
+        console.error(`Failed to load prompt template for model ${model}`, err);
+        displayBanner(`Failed to load prompt template for model ${model}.`, 'error');
+        saveBtn.disabled = false;
+        return null;
+    }
+}
+
 /**
  * Save or add an instruction from the modal.
  */
@@ -316,34 +347,16 @@ async function onModalSave() {
   const sortOrder = parseInt(document.getElementById('modal-sortOrder').value, 10) || 0;
   const model = document.getElementById('modal-model').value;
   const language = document.getElementById('modal-language').value;
-  const modelConfig = document.getElementById('modal-modelConfig').value;
+  const modelConfigValue = document.getElementById('modal-modelConfig').value;
   console.log(`Saving instruction for model: ${model}, language: ${language}`);
-  // If modelConfig is present, save it directly
-  if( modelConfig ) {
-    try {
-      modalModelConfig = JSON.parse(modelConfig);
-    } catch (err) {
-      displayBanner(`Invalid JSON in Model Config field`, 'error');
+
+  const modelConfig = await getModalConfig(model, language, modelConfigValue);
+
+  if (modelConfig === null) {
       saveBtn.disabled = false;
       return;
-    }
-  } 
-  // If both model and language are default, then set modalModelConfig empty (which means default AI agent is used for AI query)
-  else if ( !model && language === 'en' ) { 
-    modalModelConfig = '';
-  } 
-  // If modelConfig is empty although model is selected, then fetch the default config for that model
-  else {
-    try {
-      displayBanner(`Fetching model config for ${model?model:"Default"}.`, 'info');
-      modalModelConfig = await boxClient.getAiAgentDefaultConfig(model, language) || '';
-    } catch (err) {
-      console.error(`Failed to load prompt template for model ${model}`, err);
-      displayBanner(`Failed to load prompt template for model ${model}.`, 'error');
-      saveBtn.disabled = false;
-      return;
-    }
   }
+  modalModelConfig = modelConfig;
 
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
   const item = { id: editingItemId, title, instruction, sortOrder, model, language, modelConfig: modalModelConfig };
@@ -380,39 +393,11 @@ var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
 document.getElementById('modal-model').addEventListener('change', async (e) => {
   const modelId = e.target.value;
   const language = document.getElementById('modal-language').value;
-  const saveBtn = document.getElementById('modal-save');
-  saveBtn.disabled = true;
-  try {
-    displayBanner(`Fetching model config for ${modelId}.`, 'info');
-    modalModelConfig = await boxClient.getAiAgentDefaultConfig(modelId, language) || '';
-    displayBanner(`Model config for ${modelId} fetched`, 'success');
-  } catch (err) {
-    console.error(`Failed to load prompt template for model ${modelId}`, err);
-    displayBanner(`Failed to load prompt template for model ${modelId}.`, 'error');
-    // Revert to previous model on failure
-    e.target.value = modalPreviousModel;
-  }
-  modalPreviousModel = e.target.value;
-  document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
-  saveBtn.disabled = false;
+  await updateModelConfig(modelId, language);
 });
 
 document.getElementById('modal-language').addEventListener('change', async (e) => {
   const language = e.target.value;
   const modelId = document.getElementById('modal-model').value;
-  const saveBtn = document.getElementById('modal-save');
-  saveBtn.disabled = true;
-  try {
-    displayBanner(`Fetching model config for ${modelId}.`, 'info');
-    modalModelConfig = await boxClient.getAiAgentDefaultConfig(modelId, language) || '';
-    displayBanner(`Model config for ${modelId} fetched`, 'success');
-  } catch (err) {
-    console.error(`Failed to load prompt template for model ${modelId}`, err);
-    displayBanner(`Failed to load prompt template for model ${modelId}.`, 'error');
-    // Revert to previous model on failure
-    e.target.value = modalPreviousModel;
-  }
-  modalPreviousModel = e.target.value;
-  document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
-  saveBtn.disabled = false;
+  await updateModelConfig(modelId, language);
 });
