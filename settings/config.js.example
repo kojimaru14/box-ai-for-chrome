@@ -9,6 +9,7 @@ export const defaultCustomInstructions = [
     sortOrder: 0,
     model: '',
     language: 'en',
+    enabled: true,
   },
   {
     id: 'BOX_AI_DRAFT_JIRA',
@@ -17,6 +18,7 @@ export const defaultCustomInstructions = [
     sortOrder: 1,
     model: '',
     language: 'en',
+    enabled: true,
   },
   {
     id: 'BOX_AI_SUMMARIZE_TEXTS',
@@ -25,6 +27,7 @@ export const defaultCustomInstructions = [
     sortOrder: 2,
     model: '',
     language: 'en',
+    enabled: true,
   },
   {
     id: 'BOX_AI_PROOFREAD_TEXTS',
@@ -33,6 +36,7 @@ export const defaultCustomInstructions = [
     sortOrder: 3,
     model: '',
     language: 'en',
+    enabled: true,
   },
   {
     id: 'BOX_AI_TRANSLATE_BETWEEN_EN_JA',
@@ -41,6 +45,7 @@ export const defaultCustomInstructions = [
     sortOrder: 4,
     model: '',
     language: 'en',
+    enabled: true,
   },
   {
     id: 'BOX_AI_DRAFT_ARTICLE',
@@ -49,6 +54,7 @@ export const defaultCustomInstructions = [
     sortOrder: 5,
     model: '',
     language: 'en',
+    enabled: true,
   },
   {
     id: 'BOX_AI_EXPLAIN_CODE',
@@ -57,5 +63,6 @@ export const defaultCustomInstructions = [
     sortOrder: 6,
     model: '',
     language: 'en',
+    enabled: true,
   },
-]; // Default instruction template for Box AI context menu
+]; // Default set of custom instructions to use when user has no saved instructions
