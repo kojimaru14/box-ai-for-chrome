@@ -208,7 +208,7 @@ function createInstructionRow(item) {
 
   const removeButton = document.createElement('button');
   removeButton.type = 'button';
-  removeButton.title = 'Remove';
+  removeButton.title = 'Delete';
 
   // Create the SVG element
   const svgRemove = document.createElementNS(svgNS, 'svg');
@@ -354,13 +354,10 @@ async function onModalSave() {
   }
   try {
     await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-    displayBanner('Instructions saved.', 'success');
-    const status = document.getElementById('instructions-status');
-    status.textContent = 'Instructions saved.';
-    setTimeout(() => { status.textContent = ''; }, 3000);
+    displayBanner('Instruction saved.', 'success');
   } catch (err) {
-    console.error('Failed to save instructions', err);
-    displayBanner('Failed to save instructions.', 'error');
+    console.error('Failed to save instruction', err);
+    displayBanner('Failed to save instruction.', 'error');
   }
   renderInstructionsTable(currentItems);
   closeModal();
