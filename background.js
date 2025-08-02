@@ -1,9 +1,8 @@
 import BOX from './utils/box.js';
-import { defaultCustomInstructions } from './settings/config.js';
+import { defaultCustomInstructions, CUSTOM_INSTRUCTION_ID } from './settings/config.js';
 import { displayBanner } from './utils/banner.js';
 
 const boxClient = new BOX();
-const CUSTOM_INSTRUCTION_ID = 'BOX_AI_CUSTOM_INSTRUCTION';
 
 /**
  * Helper function to display a banner in a specific tab.
