@@ -1,6 +1,5 @@
 class BOX {
     #LOGHEADER = "[BOX]"; // Header for logging
-    tokens = null; // Store tokens in a private field
 
     constructor(config) {
         this.initialize(config);
@@ -101,7 +100,7 @@ class BOX {
                 tokens = null;
             }
         }
-        this.tokens = tokens;
+        
         if (tokens && Date.now() < tokens.expires_at) {
             return tokens.access_token;
         } else if (tokens && tokens.refresh_token) {
@@ -135,12 +134,12 @@ class BOX {
     }
 
     async saveTokens(tokenData) {
-        this.tokens = {
+        const tokens = {
             access_token: tokenData.access_token,
             refresh_token: tokenData.refresh_token,
             expires_at: tokenData.expires_in ? Date.now() + tokenData.expires_in * 1000 : null
         };
-        const encrypted = await this.#encryptData(this.tokens);
+        const encrypted = await this.#encryptData(tokens);
         await chrome.storage.local.set({
             ["BOX__CREDENTIALS"]: encrypted
         });
