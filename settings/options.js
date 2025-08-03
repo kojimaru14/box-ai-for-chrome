@@ -280,7 +280,7 @@ async function openEditModal(id) {
   document.getElementById('modal-instruction').value = item.instruction;
   document.getElementById('modal-sortOrder').value = item.sortOrder;
   document.getElementById('modal-enabled').checked = item.enabled;
-  document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
+  document.getElementById('modal-agentConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
   // Populate model select options
   const modelSelect = document.getElementById('modal-model');
   modelSelect.innerHTML = '';
@@ -307,28 +307,30 @@ async function openEditModal(id) {
 async function updateModelConfig(modelId, language) {
   const saveBtn = document.getElementById('modal-save');
   saveBtn.disabled = true;
+  const modelDisplayName = modelId || 'Default';
   try {
-    displayBanner(`Fetching model config for ${modelId}.`, 'info');
+    displayBanner(`Fetching agent config for ${modelDisplayName}.`, 'info');
     modalModelConfig = await boxClient.getAiAgentDefaultConfig(modelId, language) || '';
-    displayBanner(`Model config for ${modelId} fetched`, 'success');
+    displayBanner(`Agent config for ${modelDisplayName} fetched`, 'success');
   } catch (err) {
     console.error(`Failed to load prompt template for model ${modelId}`, err);
-    displayBanner(`Failed to load prompt template for model ${modelId}.`, 'error');
+    displayBanner(`Failed to load prompt template for model ${modelDisplayName}.`, 'error');
     // Revert to previous model on failure
     document.getElementById('modal-model').value = modalPreviousModel;
   }
   modalPreviousModel = document.getElementById('modal-model').value;
-  document.getElementById('modal-modelConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
+  document.getElementById('modal-agentConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
   saveBtn.disabled = false;
 }
 
 async function getModalConfig(model, language, modelConfig) {
     const saveBtn = document.getElementById('modal-save');
+    const modelDisplayName = model || 'Default';
     if (modelConfig) {
         try {
             return JSON.parse(modelConfig);
         } catch (err) {
-            displayBanner(`Invalid JSON in Model Config field`, 'error');
+            displayBanner(`Invalid JSON in Agent Config field`, 'error');
             saveBtn.disabled = false;
             return null;
         }
@@ -339,11 +341,11 @@ async function getModalConfig(model, language, modelConfig) {
     }
     // If modelConfig is empty although model is selected, then fetch the default config for that model
     try {
-        displayBanner(`Fetching model config for ${model ? model : "Default"}.`, 'info');
+        displayBanner(`Fetching agent config for ${modelDisplayName}.`, 'info');
         return await boxClient.getAiAgentDefaultConfig(model, language) || '';
     } catch (err) {
         console.error(`Failed to load prompt template for model ${model}`, err);
-        displayBanner(`Failed to load prompt template for model ${model}.`, 'error');
+        displayBanner(`Failed to load prompt template for model ${modelDisplayName}.`, 'error');
         saveBtn.disabled = false;
         return null;
     }
@@ -361,7 +363,7 @@ async function onModalSave() {
   const model = document.getElementById('modal-model').value;
   const language = document.getElementById('modal-language').value;
   const enabled = document.getElementById('modal-enabled').checked;
-  const modelConfigValue = document.getElementById('modal-modelConfig').value;
+  const modelConfigValue = document.getElementById('modal-agentConfig').value;
   console.log(`Saving instruction for model: ${model}, language: ${language}`);
 
   const modelConfig = await getModalConfig(model, language, modelConfigValue);
