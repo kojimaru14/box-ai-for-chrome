@@ -1,11 +1,10 @@
 export const BOX__CLIENT_ID = "YOUR_CLIENT_ID_HERE"; // Replace with your actual Box client ID
 export const BOX__CLIENT_SECRET = "YOUR_CLIENT_SECRET_HERE"; // Replace with your actual Box client secret
-export const CUSTOM_INSTRUCTION_ID = 'BOX_AI_CUSTOM_INSTRUCTION';
 export const defaultCustomInstructions = [
   {
-    id: CUSTOM_INSTRUCTION_ID,
+    id: 'BOX_AI_CUSTOM_INSTRUCTION',
     title: 'Send custom instruction',
-    instruction: '{Provided upon runtime}',
+    instruction: '',
     sortOrder: 0,
     model: '',
     language: 'en',
