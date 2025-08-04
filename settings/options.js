@@ -91,14 +91,14 @@ document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAut
   })();
   checkbox.addEventListener('change', async (e) => {
     await chrome.storage.local.set({ BOX__DELETE_FILE_AFTER_COPY: e.target.checked });
-    displayBanner('Cleanup setting saved.', 'success');
+    displayBanner('Cleanup setting saved', 'success');
   });
 }
 
 // State for current custom instructions and editing
 let currentItems = [];
 let editingItemId = null;
-// Stores the system prompt template for the model selected in the modal
+// Stores the agent config for the model selected in the modal
 let modalModelConfig = '';
 // Stores the previously-selected model in the modal (for revert on failure)
 let modalPreviousModel = '';
@@ -313,8 +313,8 @@ async function updateModelConfig(modelId, language) {
     modalModelConfig = await boxClient.getAiAgentDefaultConfig(modelId, language) || '';
     displayBanner(`Agent config for ${modelDisplayName} fetched`, 'success');
   } catch (err) {
-    console.error(`Failed to load prompt template for model ${modelId}`, err);
-    displayBanner(`Failed to load prompt template for model ${modelDisplayName}.`, 'error');
+    console.error(`Failed to load agent config for model ${modelDisplayName}`, err);
+    displayBanner(`Failed to load agent config for model ${modelDisplayName}.`, 'error');
     // Revert to previous model on failure
     document.getElementById('modal-model').value = modalPreviousModel;
   }
@@ -344,8 +344,8 @@ async function getModalConfig(model, language, modelConfig) {
         displayBanner(`Fetching agent config for ${modelDisplayName}.`, 'info');
         return await boxClient.getAiAgentDefaultConfig(model, language) || '';
     } catch (err) {
-        console.error(`Failed to load prompt template for model ${model}`, err);
-        displayBanner(`Failed to load prompt template for model ${modelDisplayName}.`, 'error');
+        console.error(`Failed to load agent config for model ${modelDisplayName}`, err);
+        displayBanner(`Failed to load agent config for model ${modelDisplayName}.`, 'error');
         saveBtn.disabled = false;
         return null;
     }
@@ -364,8 +364,6 @@ async function onModalSave() {
   const language = document.getElementById('modal-language').value;
   const enabled = document.getElementById('modal-enabled').checked;
   const modelConfigValue = document.getElementById('modal-agentConfig').value;
-  console.log(`Saving instruction for model: ${model}, language: ${language}`);
-
   const modelConfig = await getModalConfig(model, language, modelConfigValue);
 
   if (modelConfig === null) {
@@ -383,10 +381,10 @@ async function onModalSave() {
   }
   try {
     await chrome.storage.local.set({ BOX__CUSTOM_INSTRUCTIONS: currentItems });
-    displayBanner('Instruction saved.', 'success');
+    displayBanner('Instruction saved', 'success');
   } catch (err) {
     console.error('Failed to save instruction', err);
-    displayBanner('Failed to save instruction.', 'error');
+    displayBanner('Failed to save instruction', 'error');
   }
   renderInstructionsTable(currentItems);
   closeModal();
@@ -405,7 +403,7 @@ var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
   return new bootstrap.Tooltip(tooltipTriggerEl)
 })
 
-// When the model selection changes, update the prompt template
+// When the model selection changes, update the agent config
 document.getElementById('modal-model').addEventListener('change', async (e) => {
   const modelId = e.target.value;
   const language = document.getElementById('modal-language').value;
