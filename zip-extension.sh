@@ -6,7 +6,7 @@ set -euo pipefail
 
 # Extract name and version from manifest.json for default output filename
 VERSION=$(grep -Po '"version"\s*:\s*"\K[^"]+' manifest.json)
-NAME=$(grep -Po '"name"\s*:\s*"\K[^"]+' manifest.json | tr '[:space:]' '_')
+NAME=$(basename "$(pwd)")
 OUTPUT="${NAME}_${VERSION}.zip"
 
 # Allow custom output filename as first argument
@@ -24,6 +24,7 @@ EXCLUDE_PATTERNS=(
   "*.md"
   "*.zip"
   "zip-extension.sh"
+  "settings/config.js"
 )
 
 # Build zip exclude arguments
