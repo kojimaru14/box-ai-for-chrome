@@ -247,3 +247,9 @@ function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, 
         modelConfig
     });
 }
+
+// When the user clicks on the extension action (toolbar icon).
+chrome.action.onClicked.addListener((tab) => {
+  // Send a message to the active tab to open the chat window.
+  chrome.tabs.sendMessage(tab.id, { action: "open_chat" });
+});
