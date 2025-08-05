@@ -222,6 +222,28 @@ class BOX {
     async deleteFile(fileId) {
         await this.#apiRequest(`/files/${fileId}`, { method: 'DELETE' });
     }
+
+    // Mockup for chat functionality (this doesn't work with the current API structure)
+    async askBoxAIChat(messages, modelConfig) {
+        // NOTE: This assumes a conversational endpoint or a payload structure
+        // that supports chat history, which is a reasonable expectation for an AI API.
+        const payload = {
+            mode: 'chat', // Assuming a 'chat' mode exists
+            prompt: messages[messages.length - 1].content, // Send the latest message as the main prompt
+            chat_history: messages.slice(0, -1), // Send the rest as history
+            items: [] // No specific file item for a general chat
+        };
+
+        if (modelConfig) payload.ai_agent = modelConfig;
+
+        console.log(`${this.LOG} Asking Box AI (Chat) with payload:`, payload);
+
+        return await this.#apiRequest(`/ai/ask`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    }
 }
 
 export default BOX;

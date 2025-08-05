@@ -253,3 +253,41 @@ chrome.action.onClicked.addListener((tab) => {
   // Send a message to the active tab to open the chat window.
   chrome.tabs.sendMessage(tab.id, { action: "open_chat" });
 });
+
+// --- Chat Functionality ---
+let conversationHistory = [];
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'send_chat_message') {
+    handleChatMessage(request.message, sender.tab);
+    return true; // Indicates that the response is sent asynchronously
+  }
+});
+
+async function handleChatMessage(message, tab) {
+  conversationHistory.push({ role: 'user', content: message });
+
+  try {
+    const response = await boxClient.askBoxAIChat(conversationHistory);
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.statusText}`);
+    }
+    const jsonResponse = await response.json();
+    const aiReply = jsonResponse.answer || 'Sorry, I couldn\'t get a response.';
+
+    conversationHistory.push({ role: 'assistant', content: aiReply });
+
+    // Send the reply back to the content script
+    chrome.tabs.sendMessage(tab.id, { 
+      action: 'receive_chat_message', 
+      message: aiReply 
+    });
+
+  } catch (error) {
+    console.error('Error handling chat message:', error);
+    chrome.tabs.sendMessage(tab.id, { 
+      action: 'receive_chat_message', 
+      message: `Error: ${error.message}` 
+    });
+  }
+}

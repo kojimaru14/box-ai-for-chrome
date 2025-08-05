@@ -2,15 +2,6 @@
 fetch(chrome.runtime.getURL('chat/chat.html'))
   .then(response => response.text())
   .then(data => {
-    document.body.innerHTML += data;
+    // Use insertAdjacentHTML to avoid breaking the page's existing event listeners.
+    document.body.insertAdjacentHTML('beforeend', data);
   });
-
-// Listen for messages from the background script
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "open_chat") {
-    const chatContainer = document.getElementById('box-ai-chat-container');
-    if (chatContainer) {
-      chatContainer.style.display = 'flex';
-    }
-  }
-});
