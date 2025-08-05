@@ -89,6 +89,11 @@ const setupChatUI = () => {
       displayMessage(request.message, 'assistant');
     } else if (request.action === "open_chat") {
       chatContainer.style.display = 'flex';
+    } else if (request.action === "open_chat_with_context") {
+      messagesContainer.innerHTML = ''; // Clear previous messages
+      displayMessage(request.userMessage, 'user');
+      displayMessage(request.aiReply, 'assistant');
+      chatContainer.style.display = 'flex';
     }
   });
 };

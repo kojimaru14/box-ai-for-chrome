@@ -82,13 +82,13 @@ function sanitizeFilename(input) {
  * @param {string} [modelConfig] - Optional AI model ID to use.
  * @param {object} tab - The Chrome tab object for displaying banners.
  */
-async function askBoxAI(fileId, query, modelConfig, tab) {
+async function askBoxAI(fileId, query, modelConfig, tab, conversationHistory = []) {
     let attempt = 0;
     const maxAttempts = 5;
     while (attempt < maxAttempts) {
         try {
             showBannerInTab(tab.id, "Asking Box AI...", "info");
-            const response = await boxClient.askBoxAI(fileId, query, modelConfig);
+            const response = await boxClient.askBoxAI(fileId, query, modelConfig, conversationHistory);
 
             if (!response.ok) {
                 throw new Error(`Box AI API request failed: ${response.statusText}`);
@@ -125,6 +125,9 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, modelConfig, t
         showBannerInTab(tab.id, "Failed to upload file to Box.", "error");
         return console.error('Failed to upload file to Box', uploadData);
     }
+
+    currentFileId = fileId; // Set the current file context
+
     console.log('Box upload complete, file ID:', fileId);
     showBannerInTab(tab.id, "File uploaded to Box, asking Box AI...", "info");
     const response = await askBoxAI(fileId, instructionQuery, modelConfig, tab);
@@ -132,13 +135,27 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, modelConfig, t
         showBannerInTab(tab.id, "Failed to get response from Box AI.", "error");
         return console.error('Failed to get response from Box AI', response);
     }
-    console.log('Box AI response:', response);
-    await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        function: copyTextToClipboard,
-        args: [response.answer || response.text || "No answer provided by Box AI."]
+
+    const userMessage = instructionQuery;
+    const aiReply = response.answer || response.text || "No answer provided by Box AI.";
+
+    // Initialize the conversation history with the first exchange
+    conversationHistory = [
+        {
+            prompt: userMessage,
+            answer: aiReply,
+            created_at: response.created_at || new Date().toISOString()
+        }
+    ];
+
+    // Send a message to the content script to open the chat and display the messages
+    chrome.tabs.sendMessage(tab.id, { 
+        action: "open_chat_with_context", 
+        userMessage: userMessage, 
+        aiReply: aiReply 
     });
-    // Optionally delete the uploaded file after copying the AI response
+
+    // Optionally delete the uploaded file
     const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
         await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
     if (deleteAfterCopy) {
@@ -256,6 +273,7 @@ chrome.action.onClicked.addListener((tab) => {
 
 // --- Chat Functionality ---
 let conversationHistory = [];
+let currentFileId = null; // To keep track of the file in conversation
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'send_chat_message') {
@@ -265,17 +283,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function handleChatMessage(message, tab) {
-  conversationHistory.push({ role: 'user', content: message });
+  if (!currentFileId) {
+    showBannerInTab(tab.id, "Please start a new query from a selection first.", "info");
+    return;
+  }
+
+  const userPrompt = message;
 
   try {
-    const response = await boxClient.askBoxAIChat(conversationHistory);
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`);
-    }
-    const jsonResponse = await response.json();
-    const aiReply = jsonResponse.answer || 'Sorry, I couldn\'t get a response.';
+    // The history sent to the API should be all previous, complete exchanges.
+    const historyToSend = [...conversationHistory];
+    const response = await askBoxAI(currentFileId, userPrompt, null, tab, historyToSend);
+    const aiReply = response.answer || 'Sorry, I couldn\'t get a response.';
 
-    conversationHistory.push({ role: 'assistant', content: aiReply });
+    // Add the new, complete exchange to the history.
+    conversationHistory.push({
+        prompt: userPrompt,
+        answer: aiReply,
+        created_at: new Date().toISOString()
+    });
 
     // Send the reply back to the content script
     chrome.tabs.sendMessage(tab.id, { 
