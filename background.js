@@ -196,60 +196,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-/**
- * This function is executed as a content script in the context of the webpage.
- * It takes the text to be copied and performs the clipboard operation.
- * It sends a message back to the background script to display the banner.
- * @param {string} textToCopy - The text string to be copied to the clipboard.
- */
-function copyTextToClipboard(textToCopy) {
-    // Create a temporary, invisible textarea element.
-    const textarea = document.createElement('textarea');
-
-    // Set the value of the textarea to the text we want to copy.
-    textarea.value = textToCopy;
-
-    // Make the textarea invisible and outside the viewport to avoid affecting layout.
-    textarea.style.position = 'fixed';
-    textarea.style.top = '0';
-    textarea.style.left = '0';
-    textarea.style.width = '1px';
-    textarea.style.height = '1px';
-    textarea.style.padding = '0';
-    textarea.style.border = 'none';
-    textarea.style.outline = 'none';
-    textarea.style.boxShadow = 'none';
-    textarea.style.background = 'transparent';
-
-    // Append the textarea to the document body.
-    document.body.appendChild(textarea);
-
-    // Select the text within the textarea.
-    textarea.select();
-
-    let success = false;
-    // Try to execute the copy command.
-    try {
-        success = document.execCommand('copy');
-        if (success) {
-            console.log('Text successfully copied by content script.');
-            // Send message to background script for success banner
-            chrome.runtime.sendMessage({ type: "displayBanner", message: "Box AI response copied to clipboard!", bannerType: "success" });
-        } else {
-            console.error('Failed to execute copy command.');
-            // Send message to background script for error banner
-            chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy Box AI response to clipboard!", bannerType: "error" });
-        }
-    } catch (err) {
-        console.error('Error copying text:', err);
-        // Send message to background script for error banner
-        chrome.runtime.sendMessage({ type: "displayBanner", message: "Error copying Box AI response to clipboard!", bannerType: "error" });
-    } finally {
-        // Always remove the temporary textarea from the DOM.
-        document.body.removeChild(textarea);
-    }
-}
-
 
 function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig) {
     const instruction = prompt('Enter your custom instruction for Box AI:');

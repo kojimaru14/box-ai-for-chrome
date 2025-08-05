@@ -70,7 +70,29 @@ const setupChatUI = () => {
   const displayMessage = (message, sender) => {
     const messageElement = document.createElement('div');
     messageElement.classList.add('chat-message', `${sender}-message`);
-    messageElement.textContent = message;
+
+    const messageText = document.createElement('span');
+    messageText.textContent = message;
+    messageElement.appendChild(messageText);
+
+    if (sender === 'assistant') {
+      const copyButton = document.createElement('button');
+      copyButton.className = 'copy-button';
+      copyButton.textContent = '📋'; // Clipboard emoji
+      copyButton.title = 'Copy to clipboard';
+      copyButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(message).then(() => {
+          copyButton.textContent = '✅';
+          chrome.runtime.sendMessage({ type: "displayBanner", message: "Copied to clipboard!", bannerType: "success" });
+          setTimeout(() => { copyButton.textContent = '📋'; }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy text: ', err);
+          chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy!", bannerType: "error" });
+        });
+      });
+      messageElement.appendChild(copyButton);
+    }
+
     messagesContainer.appendChild(messageElement);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   };

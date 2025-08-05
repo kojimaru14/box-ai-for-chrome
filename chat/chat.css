@@ -107,4 +107,21 @@
   background-color: #e9e9eb;
   color: black;
   align-self: flex-start;
+  position: relative;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 5px;
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  display: none; /* Hidden by default */
+}
+
+.assistant-message:hover .copy-button {
+  display: block; /* Show on hover */
 }
