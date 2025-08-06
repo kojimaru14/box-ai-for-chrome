@@ -16,6 +16,8 @@ const setupChatUI = () => {
   const input = document.getElementById('box-ai-chat-input');
   const messagesContainer = document.getElementById('box-ai-chat-messages');
 
+  let thinkingMessageElement = null;
+  
   // --- Dragging Logic ---
   let isDragging = false;
   let offset = { x: 0, y: 0 };
@@ -67,7 +69,13 @@ const setupChatUI = () => {
     }
   };
 
-  const displayMessage = (message, sender) => {
+  const displayMessage = (message, sender, isThinking = false) => {
+    if (thinkingMessageElement && !isThinking) {
+      thinkingMessageElement.querySelector('span').textContent = message;
+      thinkingMessageElement = null;
+      return;
+    }
+
     const messageElement = document.createElement('div');
     messageElement.classList.add('chat-message', `${sender}-message`);
 
@@ -75,7 +83,10 @@ const setupChatUI = () => {
     messageText.textContent = message;
     messageElement.appendChild(messageText);
 
-    if (sender === 'assistant') {
+    if (isThinking) {
+      messageElement.classList.add('thinking');
+      thinkingMessageElement = messageElement;
+    } else if (sender === 'assistant') {
       const copyButton = document.createElement('button');
       copyButton.className = 'copy-button';
       copyButton.textContent = '📋'; // Clipboard emoji
@@ -105,17 +116,20 @@ const setupChatUI = () => {
     }
   });
 
-  // --- Global Listeners ---
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'receive_chat_message') {
-      displayMessage(request.message, 'assistant');
-    } else if (request.action === "open_chat") {
-      chatContainer.style.display = 'flex';
-    } else if (request.action === "open_chat_with_context") {
-      messagesContainer.innerHTML = ''; // Clear previous messages
-      displayMessage(request.userMessage, 'user');
-      displayMessage(request.aiReply, 'assistant');
-      chatContainer.style.display = 'flex';
+    switch (request.action) {
+      case 'open_chat_with_thinking_indicator':
+        messagesContainer.innerHTML = '';
+        displayMessage(request.instruction, 'user');
+        displayMessage('Thinking...', 'assistant', true);
+        chatContainer.style.display = 'flex';
+        break;
+      case 'receive_chat_message':
+        displayMessage(request.message, 'assistant');
+        break;
+      case 'open_chat':
+        chatContainer.style.display = 'flex';
+        break;
     }
   });
 };

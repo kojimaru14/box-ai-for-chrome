@@ -44,19 +44,19 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             defaultCustomInstructions.find(i => i.id === info.menuItemId);
         if (item) {
             if (!item.instruction) {
+                // Case 1: Custom instruction - use prompt for instruction
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     function: promptForCustomInstructionAndSendMessage,
                     args: [info.selectionText, finalFileName, item.modelConfig]
                 });
             } else {
-                handleBoxAIQuery(
-                    finalFileName,
-                    info.selectionText,
-                    item.instruction,
-                    item.modelConfig,
-                    tab
-                );
+                // Case 2: Pre-defined instruction - open chat and show thinking indicator
+                chrome.tabs.sendMessage(tab.id, {
+                    action: "open_chat_with_thinking_indicator",
+                    instruction: item.instruction
+                });
+                handleBoxAIQuery(finalFileName, info.selectionText, item.instruction, item.modelConfig, tab);
             }
         }
     });
@@ -111,6 +111,7 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, modelConfig, t
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
         showBannerInTab(tab.id, "Box access token not found. Please login via Options.", "error");
+        chrome.tabs.sendMessage(tab.id, { action: "receive_chat_message", message: "Box access token not found. Please login via Options." });
         return console.error('Box access token not found. Please login via Options.');
     }
 
@@ -123,36 +124,26 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, modelConfig, t
     );
     if (!fileId) {
         showBannerInTab(tab.id, "Failed to upload file to Box.", "error");
-        return console.error('Failed to upload file to Box', uploadData);
+        chrome.tabs.sendMessage(tab.id, { action: "receive_chat_message", message: "Failed to upload file to Box." });
+        return console.error('Failed to upload file to Box');
     }
 
-    currentFileId = fileId; // Set the current file context
-
-    console.log('Box upload complete, file ID:', fileId);
-    showBannerInTab(tab.id, "File uploaded to Box, asking Box AI...", "info");
+    currentFileId = fileId;
+    showBannerInTab(tab.id, "File uploaded, asking Box AI...", "info");
     const response = await askBoxAI(fileId, instructionQuery, modelConfig, tab);
-    if (!response) {
-        showBannerInTab(tab.id, "Failed to get response from Box AI.", "error");
-        return console.error('Failed to get response from Box AI', response);
-    }
+    const aiReply = response.answer || "Failed to get response from Box AI.";
 
-    const userMessage = instructionQuery;
-    const aiReply = response.answer || response.text || "No answer provided by Box AI.";
-
-    // Initialize the conversation history with the first exchange
     conversationHistory = [
         {
-            prompt: userMessage,
+            prompt: instructionQuery,
             answer: aiReply,
             created_at: response.created_at || new Date().toISOString()
         }
     ];
 
-    // Send a message to the content script to open the chat and display the messages
     chrome.tabs.sendMessage(tab.id, { 
-        action: "open_chat_with_context", 
-        userMessage: userMessage, 
-        aiReply: aiReply 
+        action: "receive_chat_message", 
+        message: aiReply 
     });
 
     // Optionally delete the uploaded file
