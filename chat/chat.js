@@ -17,6 +17,11 @@ const setupChatUI = () => {
   const input = document.getElementById('box-ai-chat-input');
   const messagesContainer = document.getElementById('box-ai-chat-messages');
 
+  // Initialize in minimized state
+  chatContainer.classList.add('box-ai-minimized');
+  minimizeButton.textContent = '□'; // Maximize icon
+  minimizeButton.title = 'Maximize';
+
   let thinkingMessageElement = null;
   
   // --- Dragging Logic ---
@@ -161,12 +166,18 @@ const setupChatUI = () => {
         messagesContainer.innerHTML = ''; // Clear previous messages
         displayMessage(request.instruction, 'user');
         displayMessage('Thinking...', 'assistant', true);
+        chatContainer.classList.remove('box-ai-minimized'); // Maximize the window
+        minimizeButton.textContent = '_'; // Restore minimize icon
+        minimizeButton.title = 'Minimize';
         chatContainer.style.display = 'flex';
         break;
       case 'receive_chat_message':
         displayMessage(request.message, 'assistant');
         break;
       case 'open_chat':
+        chatContainer.classList.remove('box-ai-minimized'); // Maximize the window
+        minimizeButton.textContent = '_'; // Restore minimize icon
+        minimizeButton.title = 'Minimize';
         chatContainer.style.display = 'flex';
         break;
     }
