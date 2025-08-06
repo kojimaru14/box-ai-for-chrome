@@ -70,9 +70,29 @@ const setupChatUI = () => {
   };
 
   const displayMessage = (message, sender, isThinking = false) => {
-    if (thinkingMessageElement && !isThinking) {
+    // If there's a thinking message and this is a final assistant message,
+    // update the existing thinking message instead of creating a new one.
+    if (thinkingMessageElement && sender === 'assistant' && !isThinking) {
       thinkingMessageElement.querySelector('span').textContent = message;
-      thinkingMessageElement = null;
+      thinkingMessageElement.classList.remove('thinking');
+      // Re-add copy button if it was a thinking message that got updated
+      const copyButton = document.createElement('button');
+      copyButton.className = 'copy-button';
+      copyButton.textContent = '📋';
+      copyButton.title = 'Copy to clipboard';
+      copyButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(message).then(() => {
+          copyButton.textContent = '✅';
+          chrome.runtime.sendMessage({ type: "displayBanner", message: "Copied to clipboard!", bannerType: "success" });
+          setTimeout(() => { copyButton.textContent = '📋'; }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy text: ', err);
+          chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy!", bannerType: "error" });
+        });
+      });
+      thinkingMessageElement.appendChild(copyButton);
+      thinkingMessageElement = null; // Clear the reference
+      messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to bottom
       return;
     }
 
