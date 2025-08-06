@@ -117,9 +117,10 @@ const setupChatUI = () => {
   });
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('Received message in chat.js:', request);
     switch (request.action) {
       case 'open_chat_with_thinking_indicator':
-        messagesContainer.innerHTML = '';
+        messagesContainer.innerHTML = ''; // Clear previous messages
         displayMessage(request.instruction, 'user');
         displayMessage('Thinking...', 'assistant', true);
         chatContainer.style.display = 'flex';

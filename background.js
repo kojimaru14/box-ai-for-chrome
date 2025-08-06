@@ -23,8 +23,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message in background script:', request);
     if (request.type === "displayBanner" && sender.tab) {
         showBannerInTab(sender.tab.id, request.message, request.bannerType);
-    } else if (request.type === 'BOX_AI_CUSTOM_INSTRUCTION_PROMPT' && sender.tab) {
-        handleBoxAIQuery(
+    } else if (request.type === 'PROCESS_CUSTOM_INSTRUCTION' && sender.tab) {
+        // First, tell the content script to open chat and display the user's instruction
+        chrome.tabs.sendMessage(sender.tab.id,{
+            action: "open_chat_with_thinking_indicator",
+            instruction: request.instruction
+        });
+        // Then, process the custom instruction
+        processInitialBoxAIQuery(
             request.finalFileName,
             request.selectionText,
             request.instruction,
@@ -56,7 +62,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
                     action: "open_chat_with_thinking_indicator",
                     instruction: item.instruction
                 });
-                handleBoxAIQuery(finalFileName, info.selectionText, item.instruction, item.modelConfig, tab);
+                processInitialBoxAIQuery(
+                    finalFileName,
+                    info.selectionText,
+                    item.instruction,
+                    item.modelConfig,
+                    tab
+                );
             }
         }
     });
@@ -106,7 +118,7 @@ async function askBoxAI(fileId, query, modelConfig, tab, conversationHistory = [
 /**
  * Generic handler for Box AI requests with a custom instruction query.
  */
-async function handleBoxAIQuery(fileName, text, instructionQuery, modelConfig, tab) {
+async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelConfig, tab) {
     showBannerInTab(tab.id, "Getting Box access token...", "info");
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
@@ -194,7 +206,7 @@ function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, 
         return;
     }
     chrome.runtime.sendMessage({
-        type: 'BOX_AI_CUSTOM_INSTRUCTION_PROMPT',
+        type: 'PROCESS_CUSTOM_INSTRUCTION',
         instruction,
         selectionText,
         finalFileName,
