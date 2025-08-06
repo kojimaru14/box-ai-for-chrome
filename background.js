@@ -94,7 +94,7 @@ function sanitizeFilename(input) {
  * @param {string} [modelConfig] - Optional AI model ID to use.
  * @param {object} tab - The Chrome tab object for displaying banners.
  */
-async function askBoxAI(fileId, query, modelConfig, tab, conversationHistory = []) {
+async function handleBoxAIQuery(fileId, query, modelConfig, tab, conversationHistory = []) {
     let attempt = 0;
     const maxAttempts = 5;
     while (attempt < maxAttempts) {
@@ -106,6 +106,7 @@ async function askBoxAI(fileId, query, modelConfig, tab, conversationHistory = [
                 throw new Error(`Box AI API request failed: ${response.statusText}`);
             }
             const jsonResponse = await response.json();
+            showBannerInTab(tab.id, "Box AI response received", "info");
             return jsonResponse;
         } catch (error) {
             console.error('Error getting response from Box AI API:', error);
@@ -119,7 +120,6 @@ async function askBoxAI(fileId, query, modelConfig, tab, conversationHistory = [
  * Generic handler for Box AI requests with a custom instruction query.
  */
 async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelConfig, tab) {
-    showBannerInTab(tab.id, "Getting Box access token...", "info");
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
         showBannerInTab(tab.id, "Box access token not found. Please login via Options.", "error");
@@ -142,7 +142,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
 
     currentFileId = fileId;
     showBannerInTab(tab.id, "File uploaded, asking Box AI...", "info");
-    const response = await askBoxAI(fileId, instructionQuery, modelConfig, tab);
+    const response = await handleBoxAIQuery(fileId, instructionQuery, modelConfig, tab);
     const aiReply = response.answer || "Failed to get response from Box AI.";
 
     conversationHistory = [
@@ -201,7 +201,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 
 function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig) {
-    const instruction = prompt('Enter your custom instruction for Box AI:');
+    const instruction = prompt('Enter your instruction for Box AI:');
     if (!instruction) {
         return;
     }
@@ -242,14 +242,14 @@ async function handleChatMessage(message, tab) {
   try {
     // The history sent to the API should be all previous, complete exchanges.
     const historyToSend = [...conversationHistory];
-    const response = await askBoxAI(currentFileId, userPrompt, null, tab, historyToSend);
+    const response = await handleBoxAIQuery(currentFileId, userPrompt, null, tab, historyToSend);
     const aiReply = response.answer || 'Sorry, I couldn\'t get a response.';
 
     // Add the new, complete exchange to the history.
     conversationHistory.push({
         prompt: userPrompt,
         answer: aiReply,
-        created_at: new Date().toISOString()
+        created_at: response.created_at || new Date().toISOString()
     });
 
     // Send the reply back to the content script
