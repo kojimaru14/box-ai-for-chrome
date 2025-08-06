@@ -60,7 +60,9 @@ const setupChatUI = () => {
     chatContainer.style.display = 'none';
   });
 
-  minimizeButton.addEventListener('click', () => {
+  minimizeButton.addEventListener('click', (e) => {
+    // Stop propagation to prevent header click listener from firing
+    e.stopPropagation(); 
     if (chatContainer.classList.contains('box-ai-docked')) {
       chatContainer.classList.remove('box-ai-docked');
       dockButton.textContent = '–';
@@ -94,6 +96,14 @@ const setupChatUI = () => {
     });
     return copyButton;
   };
+  // New: Handle click on header to maximize when minimized
+  header.addEventListener('click', () => {
+    if (chatContainer.classList.contains('box-ai-minimized')) {
+      chatContainer.classList.remove('box-ai-minimized');
+      minimizeButton.textContent = '_'; // Restore minimize icon
+      minimizeButton.title = 'Minimize';
+    }
+  });
 
   // --- Messaging Logic ---
   const sendMessage = () => {
