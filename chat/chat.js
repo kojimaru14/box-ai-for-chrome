@@ -59,6 +59,25 @@ const setupChatUI = () => {
     chatContainer.style.display = 'none';
   });
 
+  // --- Helper for Copy Button ---
+  const createCopyButton = (message) => {
+    const copyButton = document.createElement('button');
+    copyButton.className = 'copy-button';
+    copyButton.textContent = '📋'; // Clipboard emoji
+    copyButton.title = 'Copy to clipboard';
+    copyButton.addEventListener('click', () => {
+      navigator.clipboard.writeText(message).then(() => {
+        copyButton.textContent = '✅';
+        chrome.runtime.sendMessage({ type: "displayBanner", message: "Copied to clipboard!", bannerType: "success" });
+        setTimeout(() => { copyButton.textContent = '📋'; }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy!", bannerType: "error" });
+      });
+    });
+    return copyButton;
+  };
+
   // --- Messaging Logic ---
   const sendMessage = () => {
     const message = input.value.trim();
@@ -76,21 +95,7 @@ const setupChatUI = () => {
       thinkingMessageElement.querySelector('span').textContent = message;
       thinkingMessageElement.classList.remove('thinking');
       // Re-add copy button if it was a thinking message that got updated
-      const copyButton = document.createElement('button');
-      copyButton.className = 'copy-button';
-      copyButton.textContent = '📋';
-      copyButton.title = 'Copy to clipboard';
-      copyButton.addEventListener('click', () => {
-        navigator.clipboard.writeText(message).then(() => {
-          copyButton.textContent = '✅';
-          chrome.runtime.sendMessage({ type: "displayBanner", message: "Copied to clipboard!", bannerType: "success" });
-          setTimeout(() => { copyButton.textContent = '📋'; }, 2000);
-        }).catch(err => {
-          console.error('Failed to copy text: ', err);
-          chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy!", bannerType: "error" });
-        });
-      });
-      thinkingMessageElement.appendChild(copyButton);
+      thinkingMessageElement.appendChild(createCopyButton(message));
       thinkingMessageElement = null; // Clear the reference
       messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to bottom
       return;
@@ -107,21 +112,7 @@ const setupChatUI = () => {
       messageElement.classList.add('thinking');
       thinkingMessageElement = messageElement;
     } else if (sender === 'assistant') {
-      const copyButton = document.createElement('button');
-      copyButton.className = 'copy-button';
-      copyButton.textContent = '📋'; // Clipboard emoji
-      copyButton.title = 'Copy to clipboard';
-      copyButton.addEventListener('click', () => {
-        navigator.clipboard.writeText(message).then(() => {
-          copyButton.textContent = '✅';
-          chrome.runtime.sendMessage({ type: "displayBanner", message: "Copied to clipboard!", bannerType: "success" });
-          setTimeout(() => { copyButton.textContent = '📋'; }, 2000);
-        }).catch(err => {
-          console.error('Failed to copy text: ', err);
-          chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy!", bannerType: "error" });
-        });
-      });
-      messageElement.appendChild(copyButton);
+      messageElement.appendChild(createCopyButton(message));
     }
 
     messagesContainer.appendChild(messageElement);
