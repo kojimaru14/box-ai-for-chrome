@@ -23,8 +23,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message in background script:', request);
     if (request.type === "displayBanner" && sender.tab) {
         showBannerInTab(sender.tab.id, request.message, request.bannerType);
-    } else if (request.type === 'BOX_AI_CUSTOM_INSTRUCTION_PROMPT' && sender.tab) {
-        handleBoxAIQuery(
+    } else if (request.type === 'PROCESS_CUSTOM_INSTRUCTION' && sender.tab) {
+        // First, tell the content script to open chat and display the user's instruction
+        chrome.tabs.sendMessage(sender.tab.id,{
+            action: "open_chat_with_thinking_indicator",
+            instruction: request.instruction
+        });
+        // Then, process the custom instruction
+        processInitialBoxAIQuery(
             request.finalFileName,
             request.selectionText,
             request.instruction,
@@ -44,13 +50,19 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             defaultCustomInstructions.find(i => i.id === info.menuItemId);
         if (item) {
             if (!item.instruction) {
+                // Case 1: Custom instruction - use prompt for instruction
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     function: promptForCustomInstructionAndSendMessage,
                     args: [info.selectionText, finalFileName, item.modelConfig]
                 });
             } else {
-                handleBoxAIQuery(
+                // Case 2: Pre-defined instruction - open chat and show thinking indicator
+                chrome.tabs.sendMessage(tab.id, {
+                    action: "open_chat_with_thinking_indicator",
+                    instruction: item.instruction
+                });
+                processInitialBoxAIQuery(
                     finalFileName,
                     info.selectionText,
                     item.instruction,
@@ -82,18 +94,19 @@ function sanitizeFilename(input) {
  * @param {string} [modelConfig] - Optional AI model ID to use.
  * @param {object} tab - The Chrome tab object for displaying banners.
  */
-async function askBoxAI(fileId, query, modelConfig, tab) {
+async function handleBoxAIQuery(fileId, query, modelConfig, tab, conversationHistory = []) {
     let attempt = 0;
     const maxAttempts = 5;
     while (attempt < maxAttempts) {
         try {
             showBannerInTab(tab.id, "Asking Box AI...", "info");
-            const response = await boxClient.askBoxAI(fileId, query, modelConfig);
+            const response = await boxClient.askBoxAI(fileId, query, modelConfig, conversationHistory);
 
             if (!response.ok) {
                 throw new Error(`Box AI API request failed: ${response.statusText}`);
             }
             const jsonResponse = await response.json();
+            showBannerInTab(tab.id, "Box AI response received", "success");
             return jsonResponse;
         } catch (error) {
             console.error('Error getting response from Box AI API:', error);
@@ -106,11 +119,11 @@ async function askBoxAI(fileId, query, modelConfig, tab) {
 /**
  * Generic handler for Box AI requests with a custom instruction query.
  */
-async function handleBoxAIQuery(fileName, text, instructionQuery, modelConfig, tab) {
-    showBannerInTab(tab.id, "Getting Box access token...", "info");
+async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelConfig, tab) {
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
         showBannerInTab(tab.id, "Box access token not found. Please login via Options.", "error");
+        chrome.tabs.sendMessage(tab.id, { action: "receive_chat_message", message: "Box access token not found. Please login via Options." });
         return console.error('Box access token not found. Please login via Options.');
     }
 
@@ -123,22 +136,29 @@ async function handleBoxAIQuery(fileName, text, instructionQuery, modelConfig, t
     );
     if (!fileId) {
         showBannerInTab(tab.id, "Failed to upload file to Box.", "error");
-        return console.error('Failed to upload file to Box', uploadData);
+        chrome.tabs.sendMessage(tab.id, { action: "receive_chat_message", message: "Failed to upload file to Box." });
+        return console.error('Failed to upload file to Box');
     }
-    console.log('Box upload complete, file ID:', fileId);
-    showBannerInTab(tab.id, "File uploaded to Box, asking Box AI...", "info");
-    const response = await askBoxAI(fileId, instructionQuery, modelConfig, tab);
-    if (!response) {
-        showBannerInTab(tab.id, "Failed to get response from Box AI.", "error");
-        return console.error('Failed to get response from Box AI', response);
-    }
-    console.log('Box AI response:', response);
-    await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        function: copyTextToClipboard,
-        args: [response.answer || response.text || "No answer provided by Box AI."]
+
+    currentFileId = fileId;
+    showBannerInTab(tab.id, "File uploaded, asking Box AI...", "info");
+    const response = await handleBoxAIQuery(fileId, instructionQuery, modelConfig, tab);
+    const aiReply = response.answer || "Failed to get response from Box AI.";
+
+    conversationHistory = [
+        {
+            prompt: instructionQuery,
+            answer: aiReply,
+            created_at: response.created_at || new Date().toISOString()
+        }
+    ];
+
+    chrome.tabs.sendMessage(tab.id, { 
+        action: "receive_chat_message", 
+        message: aiReply 
     });
-    // Optionally delete the uploaded file after copying the AI response
+
+    // Optionally delete the uploaded file
     const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
         await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
     if (deleteAfterCopy) {
@@ -179,71 +199,70 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-/**
- * This function is executed as a content script in the context of the webpage.
- * It takes the text to be copied and performs the clipboard operation.
- * It sends a message back to the background script to display the banner.
- * @param {string} textToCopy - The text string to be copied to the clipboard.
- */
-function copyTextToClipboard(textToCopy) {
-    // Create a temporary, invisible textarea element.
-    const textarea = document.createElement('textarea');
-
-    // Set the value of the textarea to the text we want to copy.
-    textarea.value = textToCopy;
-
-    // Make the textarea invisible and outside the viewport to avoid affecting layout.
-    textarea.style.position = 'fixed';
-    textarea.style.top = '0';
-    textarea.style.left = '0';
-    textarea.style.width = '1px';
-    textarea.style.height = '1px';
-    textarea.style.padding = '0';
-    textarea.style.border = 'none';
-    textarea.style.outline = 'none';
-    textarea.style.boxShadow = 'none';
-    textarea.style.background = 'transparent';
-
-    // Append the textarea to the document body.
-    document.body.appendChild(textarea);
-
-    // Select the text within the textarea.
-    textarea.select();
-
-    let success = false;
-    // Try to execute the copy command.
-    try {
-        success = document.execCommand('copy');
-        if (success) {
-            console.log('Text successfully copied by content script.');
-            // Send message to background script for success banner
-            chrome.runtime.sendMessage({ type: "displayBanner", message: "Box AI response copied to clipboard!", bannerType: "success" });
-        } else {
-            console.error('Failed to execute copy command.');
-            // Send message to background script for error banner
-            chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy Box AI response to clipboard!", bannerType: "error" });
-        }
-    } catch (err) {
-        console.error('Error copying text:', err);
-        // Send message to background script for error banner
-        chrome.runtime.sendMessage({ type: "displayBanner", message: "Error copying Box AI response to clipboard!", bannerType: "error" });
-    } finally {
-        // Always remove the temporary textarea from the DOM.
-        document.body.removeChild(textarea);
-    }
-}
-
 
 function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig) {
-    const instruction = prompt('Enter your custom instruction for Box AI:');
+    const instruction = prompt('Enter your instruction for Box AI:');
     if (!instruction) {
         return;
     }
     chrome.runtime.sendMessage({
-        type: 'BOX_AI_CUSTOM_INSTRUCTION_PROMPT',
+        type: 'PROCESS_CUSTOM_INSTRUCTION',
         instruction,
         selectionText,
         finalFileName,
         modelConfig
     });
+}
+
+// When the user clicks on the extension action (toolbar icon).
+chrome.action.onClicked.addListener((tab) => {
+  // Send a message to the active tab to open the chat window.
+  chrome.tabs.sendMessage(tab.id, { action: "open_chat" });
+});
+
+// --- Chat Functionality ---
+let conversationHistory = [];
+let currentFileId = null; // To keep track of the file in conversation
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'send_chat_message') {
+    handleChatMessage(request.message, sender.tab);
+    return true; // Indicates that the response is sent asynchronously
+  }
+});
+
+async function handleChatMessage(message, tab) {
+  if (!currentFileId) {
+    showBannerInTab(tab.id, "Please start a new query from a selection first.", "info");
+    return;
+  }
+
+  const userPrompt = message;
+
+  try {
+    // The history sent to the API should be all previous, complete exchanges.
+    const historyToSend = [...conversationHistory];
+    const response = await handleBoxAIQuery(currentFileId, userPrompt, null, tab, historyToSend);
+    const aiReply = response.answer || 'Sorry, I couldn\'t get a response.';
+
+    // Add the new, complete exchange to the history.
+    conversationHistory.push({
+        prompt: userPrompt,
+        answer: aiReply,
+        created_at: response.created_at || new Date().toISOString()
+    });
+
+    // Send the reply back to the content script
+    chrome.tabs.sendMessage(tab.id, { 
+      action: 'receive_chat_message', 
+      message: aiReply 
+    });
+
+  } catch (error) {
+    console.error('Error handling chat message:', error);
+    chrome.tabs.sendMessage(tab.id, { 
+      action: 'receive_chat_message', 
+      message: `Error: ${error.message}` 
+    });
+  }
 }

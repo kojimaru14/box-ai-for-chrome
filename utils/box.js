@@ -181,13 +181,14 @@ class BOX {
         return await res.json();
     }
 
-    async askBoxAI(fileId, query, modelConfig) {
+    async askBoxAI(fileId, query, agentConfig, dialog = null) {
         const payload = {
             mode: 'single_item_qa',
             prompt: `${query}`,
             items: [{ type: 'file', id: `${fileId}` }]
         };
-        if (modelConfig) payload.ai_agent = modelConfig;
+        if (dialog) payload.dialogue_history = dialog;
+        if (agentConfig) payload.ai_agent = agentConfig;
         console.log(`${this.LOG} Asking Box AI with payload:`, payload);
         return await this.#apiRequest(`/ai/ask`, {
             method: 'POST',

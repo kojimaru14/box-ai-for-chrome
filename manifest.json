@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Box AI for Chrome",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Ask questions about the selected texts using the Box AI API.",
   "permissions": [
     "storage",
@@ -33,5 +33,18 @@
   },
   "host_permissions": [
     "*://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["chat/chat.css"],
+      "js": ["content.js", "chat/chat.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["chat/chat.html", "chat/chat.js", "chat/chat.css"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }
