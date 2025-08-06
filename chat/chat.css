@@ -9,7 +9,7 @@
   border: 1px solid #ccc;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  display: flex;
+  display: none; /* Hidden by default */
   flex-direction: column;
   z-index: 9999;
   transition: all 0.3s ease-in-out;
