@@ -106,7 +106,7 @@ async function handleBoxAIQuery(fileId, query, modelConfig, tab, conversationHis
                 throw new Error(`Box AI API request failed: ${response.statusText}`);
             }
             const jsonResponse = await response.json();
-            showBannerInTab(tab.id, "Box AI response received", "info");
+            showBannerInTab(tab.id, "Box AI response received", "success");
             return jsonResponse;
         } catch (error) {
             console.error('Error getting response from Box AI API:', error);
