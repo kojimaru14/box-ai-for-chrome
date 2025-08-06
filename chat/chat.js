@@ -12,6 +12,7 @@ const setupChatUI = () => {
   const header = document.getElementById('box-ai-chat-header');
   const dockButton = document.getElementById('box-ai-dock-button');
   const closeButton = document.getElementById('box-ai-close-button');
+  const minimizeButton = document.getElementById('box-ai-minimize-button');
   const sendButton = document.getElementById('box-ai-send-button');
   const input = document.getElementById('box-ai-chat-input');
   const messagesContainer = document.getElementById('box-ai-chat-messages');
@@ -23,7 +24,7 @@ const setupChatUI = () => {
   let offset = { x: 0, y: 0 };
 
   header.addEventListener('mousedown', (e) => {
-    if (chatContainer.classList.contains('box-ai-docked')) return;
+    if (chatContainer.classList.contains('box-ai-docked') || chatContainer.classList.contains('box-ai-minimized')) return;
     isDragging = true;
     offset.x = e.clientX - chatContainer.offsetLeft;
     offset.y = e.clientY - chatContainer.offsetTop;
@@ -57,6 +58,22 @@ const setupChatUI = () => {
 
   closeButton.addEventListener('click', () => {
     chatContainer.style.display = 'none';
+  });
+
+  minimizeButton.addEventListener('click', () => {
+    if (chatContainer.classList.contains('box-ai-docked')) {
+      chatContainer.classList.remove('box-ai-docked');
+      dockButton.textContent = '–';
+      dockButton.title = 'Dock to side';
+    }
+    chatContainer.classList.toggle('box-ai-minimized');
+    if (chatContainer.classList.contains('box-ai-minimized')) {
+      minimizeButton.textContent = '□'; // Maximize icon
+      minimizeButton.title = 'Maximize';
+    } else {
+      minimizeButton.textContent = '_'; // Minimize icon
+      minimizeButton.title = 'Minimize';
+    }
   });
 
   // --- Helper for Copy Button ---

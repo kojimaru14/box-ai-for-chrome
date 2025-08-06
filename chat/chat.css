@@ -9,10 +9,48 @@
   border: 1px solid #ccc;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  display: none; /* Hidden by default */
+  display: flex; /* Hidden by default */
   flex-direction: column;
   z-index: 9999;
   transition: all 0.3s ease-in-out;
+}
+
+/* Minimized State */
+#box-ai-chat-container.box-ai-minimized {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+#box-ai-chat-container.box-ai-minimized #box-ai-chat-header {
+  cursor: pointer; /* Make the whole minimized icon clickable */
+  border-bottom: none;
+  border-radius: 50%;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+#box-ai-chat-container.box-ai-minimized #box-ai-chat-header span {
+  display: none; /* Hide title */
+}
+
+#box-ai-chat-container.box-ai-minimized #box-ai-chat-actions {
+  display: none; /* Hide other buttons */
+}
+
+#box-ai-chat-container.box-ai-minimized #box-ai-minimize-button {
+  display: block; /* Only show minimize/maximize button */
+  font-size: 30px;
+  color: #007bff;
+}
+
+#box-ai-chat-container.box-ai-minimized #box-ai-chat-messages,
+#box-ai-chat-container.box-ai-minimized #box-ai-chat-input-container {
+  display: none; /* Hide chat content */
 }
 
 /* Docked State */
