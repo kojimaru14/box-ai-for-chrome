@@ -12,9 +12,17 @@ const setupChatUI = () => {
   const header = document.getElementById('box-ai-chat-header');
   const dockButton = document.getElementById('box-ai-dock-button');
   const closeButton = document.getElementById('box-ai-close-button');
+  const minimizeButton = document.getElementById('box-ai-minimize-button');
   const sendButton = document.getElementById('box-ai-send-button');
   const input = document.getElementById('box-ai-chat-input');
   const messagesContainer = document.getElementById('box-ai-chat-messages');
+
+  // Initialize in minimized state
+  chatContainer.classList.add('box-ai-minimized');
+  minimizeButton.textContent = ''; // Hide text when minimized
+  minimizeButton.title = 'Maximize';
+  // chatContainer.style.display = 'flex'; // Make it visible after minimizing
+  // ↑ Uncomment this line if you want the chat icon to be visible by default.
 
   let thinkingMessageElement = null;
   
@@ -23,7 +31,7 @@ const setupChatUI = () => {
   let offset = { x: 0, y: 0 };
 
   header.addEventListener('mousedown', (e) => {
-    if (chatContainer.classList.contains('box-ai-docked')) return;
+    if (chatContainer.classList.contains('box-ai-docked') || chatContainer.classList.contains('box-ai-minimized')) return;
     isDragging = true;
     offset.x = e.clientX - chatContainer.offsetLeft;
     offset.y = e.clientY - chatContainer.offsetTop;
@@ -59,6 +67,26 @@ const setupChatUI = () => {
     chatContainer.style.display = 'none';
   });
 
+  minimizeButton.addEventListener('click', (e) => {
+    // Stop propagation to prevent header click listener from firing
+    e.stopPropagation(); 
+    if (chatContainer.classList.contains('box-ai-docked')) {
+      chatContainer.classList.remove('box-ai-docked');
+      dockButton.textContent = '–';
+      dockButton.title = 'Dock to side';
+    }
+    chatContainer.classList.toggle('box-ai-minimized');
+    if (chatContainer.classList.contains('box-ai-minimized')) {
+      minimizeButton.textContent = ''; // Hide text when minimized
+      minimizeButton.title = 'Maximize';
+      chatContainer.style.left = ''; // Clear inline left style
+      chatContainer.style.top = '';  // Clear inline top style
+    } else {
+      minimizeButton.textContent = '_'; // Show text when maximized
+      minimizeButton.title = 'Minimize';
+    }
+  });
+
   // --- Helper for Copy Button ---
   const createCopyButton = (message) => {
     const copyButton = document.createElement('button');
@@ -77,6 +105,14 @@ const setupChatUI = () => {
     });
     return copyButton;
   };
+  // New: Handle click on header to maximize when minimized
+  header.addEventListener('click', () => {
+    if (chatContainer.classList.contains('box-ai-minimized')) {
+      chatContainer.classList.remove('box-ai-minimized');
+      minimizeButton.textContent = '_'; // Restore minimize icon
+      minimizeButton.title = 'Minimize';
+    }
+  });
 
   // --- Messaging Logic ---
   const sendMessage = () => {
@@ -134,12 +170,18 @@ const setupChatUI = () => {
         messagesContainer.innerHTML = ''; // Clear previous messages
         displayMessage(request.instruction, 'user');
         displayMessage('Thinking...', 'assistant', true);
+        chatContainer.classList.remove('box-ai-minimized'); // Maximize the window
+        minimizeButton.textContent = '_'; // Restore minimize icon
+        minimizeButton.title = 'Minimize';
         chatContainer.style.display = 'flex';
         break;
       case 'receive_chat_message':
         displayMessage(request.message, 'assistant');
         break;
       case 'open_chat':
+        chatContainer.classList.remove('box-ai-minimized'); // Maximize the window
+        minimizeButton.textContent = '_'; // Restore minimize icon
+        minimizeButton.title = 'Minimize';
         chatContainer.style.display = 'flex';
         break;
     }
