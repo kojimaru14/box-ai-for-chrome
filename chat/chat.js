@@ -79,6 +79,8 @@ const setupChatUI = () => {
     if (chatContainer.classList.contains('box-ai-minimized')) {
       minimizeButton.textContent = ''; // Hide text when minimized
       minimizeButton.title = 'Maximize';
+      chatContainer.style.left = ''; // Clear inline left style
+      chatContainer.style.top = '';  // Clear inline top style
     } else {
       minimizeButton.textContent = '_'; // Show text when maximized
       minimizeButton.title = 'Minimize';
