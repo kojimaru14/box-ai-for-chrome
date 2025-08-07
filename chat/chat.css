@@ -9,7 +9,7 @@
   border: 1px solid #ccc;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  display: flex; /* Always visible, but minimized by default */
+  display: none; /* Hidden by default */
   flex-direction: column;
   z-index: 9999;
   transition: all 0.3s ease-in-out;
@@ -43,18 +43,37 @@
 }
 
 #box-ai-chat-container.box-ai-minimized #box-ai-chat-actions {
-  display: none; /* Hide other buttons */
-}
-
-#box-ai-chat-container.box-ai-minimized #box-ai-minimize-button {
-  display: block; /* Only show minimize/maximize button */
-  font-size: 0; /* Hide text */
+  display: block; /* Make actions container visible */
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 100%;
   height: 100%;
-  background-color: transparent; /* Make button background transparent */
-  border: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+#box-ai-chat-container.box-ai-minimized #box-ai-minimize-button,
+#box-ai-chat-container.box-ai-minimized #box-ai-dock-button {
+  display: none; /* Hide minimize and dock buttons when minimized */
+}
+
+#box-ai-chat-container.box-ai-minimized #box-ai-close-button {
+  display: block; /* Show close button when minimized */
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  font-size: 20px;
+  color: #fff; /* Adjust color for visibility on icon */
+  background-color: rgba(0,0,0,0.5); /* Semi-transparent background */
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  line-height: 20px;
+  text-align: center;
   padding: 0;
-  margin: 0;
+  z-index: 10000; /* Ensure it's on top */
 }
 
 #box-ai-chat-container.box-ai-minimized #box-ai-chat-messages,

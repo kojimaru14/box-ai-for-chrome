@@ -19,8 +19,9 @@ const setupChatUI = () => {
 
   // Initialize in minimized state
   chatContainer.classList.add('box-ai-minimized');
-  minimizeButton.textContent = '□'; // Maximize icon
+  minimizeButton.textContent = ''; // Hide text when minimized
   minimizeButton.title = 'Maximize';
+  chatContainer.style.display = 'flex'; // Make it visible after minimizing
 
   let thinkingMessageElement = null;
   
@@ -75,10 +76,10 @@ const setupChatUI = () => {
     }
     chatContainer.classList.toggle('box-ai-minimized');
     if (chatContainer.classList.contains('box-ai-minimized')) {
-      minimizeButton.textContent = '□'; // Maximize icon
+      minimizeButton.textContent = ''; // Hide text when minimized
       minimizeButton.title = 'Maximize';
     } else {
-      minimizeButton.textContent = '_'; // Minimize icon
+      minimizeButton.textContent = '_'; // Show text when maximized
       minimizeButton.title = 'Minimize';
     }
   });
