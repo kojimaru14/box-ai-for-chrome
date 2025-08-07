@@ -21,7 +21,8 @@ const setupChatUI = () => {
   chatContainer.classList.add('box-ai-minimized');
   minimizeButton.textContent = ''; // Hide text when minimized
   minimizeButton.title = 'Maximize';
-  chatContainer.style.display = 'flex'; // Make it visible after minimizing
+  // chatContainer.style.display = 'flex'; // Make it visible after minimizing
+  // ↑ Uncomment this line if you want the chat icon to be visible by default.
 
   let thinkingMessageElement = null;
   
