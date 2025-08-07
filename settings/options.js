@@ -18,6 +18,10 @@ async function loginBoxOAuth() {
     const redirectUri = chrome.identity.getRedirectURL();
     const authUrl = boxClient.getAuthorizeURL(redirectUri);
     chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true }, async (redirectedTo) => {
+        if (chrome.runtime.lastError || !redirectedTo) {
+            console.error(chrome.runtime.lastError);
+            return;
+        }
         const params = new URLSearchParams(new URL(redirectedTo).search);
         const code = params.get('code');
         await boxClient.getTokensAuthorizationCodeGrant(code, redirectUri);
