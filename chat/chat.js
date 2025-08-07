@@ -56,7 +56,7 @@ const setupChatUI = () => {
       // If docked, undock first before minimizing
       if (chatContainer.classList.contains('box-ai-docked')) {
         chatContainer.classList.remove('box-ai-docked');
-        dockButton.textContent = '–';
+        dockButton.textContent = '⮆';
         dockButton.title = 'Dock to side';
       }
       chatContainer.classList.add('box-ai-minimized');
@@ -87,7 +87,7 @@ const setupChatUI = () => {
       dockButton.textContent = '❐';
       dockButton.title = 'Undock';
     } else {
-      dockButton.textContent = '–';
+      dockButton.textContent = '⮆';
       dockButton.title = 'Dock to side';
     }
   };
