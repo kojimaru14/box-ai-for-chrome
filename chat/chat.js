@@ -1,14 +1,39 @@
-// This script is injected into the page and controls the chat UI.
-// It runs after the main document is loaded, but we still need to wait for our specific HTML to be injected.
+const { createSvgIcon, icons } = window.BoxExtensionIcons;
 
+/**
+ * Creates a "Copy to Clipboard" button for a message.
+ * @param {string} message - The text to be copied.
+ * @returns {HTMLButtonElement} The copy button element.
+ */
+const createCopyButton = (message) => {
+  const copyButton = document.createElement('button');
+  copyButton.className = 'copy-button';
+  copyButton.textContent = '📋'; // Clipboard emoji
+  copyButton.title = 'Copy to clipboard';
+  copyButton.addEventListener('click', () => {
+    navigator.clipboard.writeText(message).then(() => {
+      copyButton.textContent = '✅';
+      chrome.runtime.sendMessage({ type: "displayBanner", message: "Copied to clipboard!", bannerType: "success" });
+      setTimeout(() => { copyButton.textContent = '📋'; }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy!", bannerType: "error" });
+    });
+  });
+  return copyButton;
+};
+
+/**
+ * Initializes the entire chat UI and its functionalities.
+ */
 const setupChatUI = () => {
   const chatContainer = document.getElementById('box-ai-chat-container');
-  // If the container isn't on the page yet, wait and try again.
   if (!chatContainer) {
-    setTimeout(setupChatUI, 100); // Check again in 100ms
+    setTimeout(setupChatUI, 100); // Retry if the container isn't ready
     return;
   }
 
+  // --- DOM Elements ---
   const header = document.getElementById('box-ai-chat-header');
   const dockButton = document.getElementById('box-ai-dock-button');
   const closeButton = document.getElementById('box-ai-close-button');
@@ -17,24 +42,113 @@ const setupChatUI = () => {
   const input = document.getElementById('box-ai-chat-input');
   const messagesContainer = document.getElementById('box-ai-chat-messages');
 
-  // Initialize in minimized state
-  chatContainer.classList.add('box-ai-minimized');
-  minimizeButton.textContent = ''; // Hide text when minimized
-  minimizeButton.title = 'Maximize';
-  // chatContainer.style.display = 'flex'; // Make it visible after minimizing
-  // ↑ Uncomment this line if you want the chat icon to be visible by default.
-
-  let thinkingMessageElement = null;
-  
-  // --- Dragging Logic ---
+  // --- State ---
   let isDragging = false;
   let offset = { x: 0, y: 0 };
+  let thinkingMessageElement = null;
 
+  
+
+  // --- UI Update Functions ---
+
+  /**
+   * Sets the minimized state of the chat window.
+   * @param {boolean} minimized - True to minimize, false to maximize.
+   */
+  const setMinimized = (minimized) => {
+    if (minimized) {
+      // If docked, undock first before minimizing
+      if (chatContainer.classList.contains('box-ai-docked')) {
+        chatContainer.classList.remove('box-ai-docked');
+        dockButton.innerHTML = '';
+        dockButton.appendChild(createSvgIcon(icons.dock));
+        dockButton.title = 'Dock to side';
+      }
+      chatContainer.classList.add('box-ai-minimized');
+      minimizeButton.title = 'Maximize';
+      // Reset position when minimizing
+      chatContainer.style.left = '';
+      chatContainer.style.top = '';
+    } else {
+      chatContainer.classList.remove('box-ai-minimized');
+      minimizeButton.title = 'Minimize';
+    }
+  };
+
+  /**
+   * Toggles the docked state of the chat window.
+   */
+  const toggleDock = () => {
+    // Cannot dock if minimized
+    if (chatContainer.classList.contains('box-ai-minimized')) return;
+
+    const isDocked = chatContainer.classList.toggle('box-ai-docked');
+    dockButton.innerHTML = ''; // Clear existing icon
+    if (isDocked) {
+      // Reset position when docking
+      chatContainer.style.left = '';
+      chatContainer.style.top = '';
+      dockButton.appendChild(createSvgIcon(icons.undock));
+      dockButton.title = 'Undock';
+    } else {
+      dockButton.appendChild(createSvgIcon(icons.dock));
+      dockButton.title = 'Dock to side';
+    }
+  };
+
+  /**
+   * Displays a message in the chat window.
+   * @param {string} message - The message content.
+   * @param {string} sender - 'user' or 'assistant'.
+   * @param {boolean} isThinking - If true, displays a thinking indicator.
+   */
+  const displayMessage = (message, sender, isThinking = false) => {
+    // If updating a "thinking" message to a final one
+    if (thinkingMessageElement && sender === 'assistant' && !isThinking) {
+      thinkingMessageElement.querySelector('span').textContent = message;
+      thinkingMessageElement.classList.remove('thinking');
+      thinkingMessageElement.appendChild(createCopyButton(message));
+      thinkingMessageElement = null; // Clear reference
+    } else {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('chat-message', `${sender}-message`);
+
+      const messageText = document.createElement('span');
+      messageText.textContent = message;
+      messageElement.appendChild(messageText);
+
+      if (isThinking) {
+        messageElement.classList.add('thinking');
+        thinkingMessageElement = messageElement;
+      } else if (sender === 'assistant') {
+        messageElement.appendChild(createCopyButton(message));
+      }
+      messagesContainer.appendChild(messageElement);
+    }
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  };
+
+  // --- Event Handlers ---
+
+  const handleSendMessage = () => {
+    const message = input.value.trim();
+    if (message) {
+      displayMessage(message, 'user');
+      chrome.runtime.sendMessage({ action: 'send_chat_message', message });
+      input.value = '';
+    }
+  };
+
+  // --- Event Listeners Setup ---
+
+  // Dragging Logic
   header.addEventListener('mousedown', (e) => {
     if (chatContainer.classList.contains('box-ai-docked') || chatContainer.classList.contains('box-ai-minimized')) return;
     isDragging = true;
-    offset.x = e.clientX - chatContainer.offsetLeft;
-    offset.y = e.clientY - chatContainer.offsetTop;
+    offset = {
+      x: e.clientX - chatContainer.offsetLeft,
+      y: e.clientY - chatContainer.offsetTop,
+    };
     chatContainer.style.cursor = 'move';
   });
 
@@ -49,120 +163,36 @@ const setupChatUI = () => {
     chatContainer.style.cursor = 'default';
   });
 
-  // --- Action Buttons ---
-  dockButton.addEventListener('click', () => {
-    chatContainer.classList.toggle('box-ai-docked');
-    if (chatContainer.classList.contains('box-ai-docked')) {
-      chatContainer.style.left = '';
-      chatContainer.style.top = '';
-      dockButton.textContent = '❐';
-      dockButton.title = 'Undock';
-    } else {
-      dockButton.textContent = '–';
-      dockButton.title = 'Dock to side';
-    }
-  });
+  // Action Buttons & Input
+  dockButton.addEventListener('click', toggleDock);
 
   closeButton.addEventListener('click', () => {
     chatContainer.style.display = 'none';
+    chrome.runtime.sendMessage({ action: 'chat_closed' });
   });
 
   minimizeButton.addEventListener('click', (e) => {
-    // Stop propagation to prevent header click listener from firing
-    e.stopPropagation(); 
-    if (chatContainer.classList.contains('box-ai-docked')) {
-      chatContainer.classList.remove('box-ai-docked');
-      dockButton.textContent = '–';
-      dockButton.title = 'Dock to side';
-    }
-    chatContainer.classList.toggle('box-ai-minimized');
-    if (chatContainer.classList.contains('box-ai-minimized')) {
-      minimizeButton.textContent = ''; // Hide text when minimized
-      minimizeButton.title = 'Maximize';
-      chatContainer.style.left = ''; // Clear inline left style
-      chatContainer.style.top = '';  // Clear inline top style
-    } else {
-      minimizeButton.textContent = '_'; // Show text when maximized
-      minimizeButton.title = 'Minimize';
-    }
+    e.stopPropagation(); // Prevent header click event
+    setMinimized(!chatContainer.classList.contains('box-ai-minimized'));
   });
 
-  // --- Helper for Copy Button ---
-  const createCopyButton = (message) => {
-    const copyButton = document.createElement('button');
-    copyButton.className = 'copy-button';
-    copyButton.textContent = '📋'; // Clipboard emoji
-    copyButton.title = 'Copy to clipboard';
-    copyButton.addEventListener('click', () => {
-      navigator.clipboard.writeText(message).then(() => {
-        copyButton.textContent = '✅';
-        chrome.runtime.sendMessage({ type: "displayBanner", message: "Copied to clipboard!", bannerType: "success" });
-        setTimeout(() => { copyButton.textContent = '📋'; }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy text: ', err);
-        chrome.runtime.sendMessage({ type: "displayBanner", message: "Failed to copy!", bannerType: "error" });
-      });
-    });
-    return copyButton;
-  };
-  // New: Handle click on header to maximize when minimized
+  // Maximize when clicking the header of a minimized chat
   header.addEventListener('click', () => {
     if (chatContainer.classList.contains('box-ai-minimized')) {
-      chatContainer.classList.remove('box-ai-minimized');
-      minimizeButton.textContent = '_'; // Restore minimize icon
-      minimizeButton.title = 'Minimize';
+      setMinimized(false); // Maximize
     }
   });
 
-  // --- Messaging Logic ---
-  const sendMessage = () => {
-    const message = input.value.trim();
-    if (message) {
-      displayMessage(message, 'user');
-      chrome.runtime.sendMessage({ action: 'send_chat_message', message });
-      input.value = '';
-    }
-  };
+  sendButton.addEventListener('click', handleSendMessage);
 
-  const displayMessage = (message, sender, isThinking = false) => {
-    // If there's a thinking message and this is a final assistant message,
-    // update the existing thinking message instead of creating a new one.
-    if (thinkingMessageElement && sender === 'assistant' && !isThinking) {
-      thinkingMessageElement.querySelector('span').textContent = message;
-      thinkingMessageElement.classList.remove('thinking');
-      // Re-add copy button if it was a thinking message that got updated
-      thinkingMessageElement.appendChild(createCopyButton(message));
-      thinkingMessageElement = null; // Clear the reference
-      messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to bottom
-      return;
-    }
-
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('chat-message', `${sender}-message`);
-
-    const messageText = document.createElement('span');
-    messageText.textContent = message;
-    messageElement.appendChild(messageText);
-
-    if (isThinking) {
-      messageElement.classList.add('thinking');
-      thinkingMessageElement = messageElement;
-    } else if (sender === 'assistant') {
-      messageElement.appendChild(createCopyButton(message));
-    }
-
-    messagesContainer.appendChild(messageElement);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  };
-
-  sendButton.addEventListener('click', sendMessage);
   input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      handleSendMessage();
     }
   });
 
+  // Chrome Runtime Listener
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message in chat.js:', request);
     switch (request.action) {
@@ -170,26 +200,26 @@ const setupChatUI = () => {
         messagesContainer.innerHTML = ''; // Clear previous messages
         displayMessage(request.instruction, 'user');
         displayMessage('Thinking...', 'assistant', true);
-        chatContainer.classList.remove('box-ai-minimized'); // Maximize the window
-        minimizeButton.textContent = '_'; // Restore minimize icon
-        minimizeButton.title = 'Minimize';
+        setMinimized(false); // Maximize
         chatContainer.style.display = 'flex';
         break;
       case 'receive_chat_message':
         displayMessage(request.message, 'assistant');
         break;
       case 'open_chat':
-        chatContainer.classList.remove('box-ai-minimized'); // Maximize the window
-        minimizeButton.textContent = '_'; // Restore minimize icon
-        minimizeButton.title = 'Minimize';
+        setMinimized(false); // Maximize
         chatContainer.style.display = 'flex';
         break;
     }
   });
+
+  // --- Initial State ---
+  setMinimized(true); // Initialize as minimized
+  // To make the chat icon visible by default, you might need to set
+  // chatContainer.style.display = 'flex';
 };
 
-// Start the setup process. If the document is already loaded, it will run.
-// If not, it will wait for the DOMContentLoaded event.
+// --- Entry Point ---
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupChatUI);
 } else {
