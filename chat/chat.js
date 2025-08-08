@@ -168,6 +168,7 @@ const setupChatUI = () => {
 
   closeButton.addEventListener('click', () => {
     chatContainer.style.display = 'none';
+    chrome.runtime.sendMessage({ action: 'chat_closed' });
   });
 
   minimizeButton.addEventListener('click', (e) => {

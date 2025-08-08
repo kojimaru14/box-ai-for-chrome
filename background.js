@@ -157,19 +157,6 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
         action: "receive_chat_message", 
         message: aiReply 
     });
-
-    // Optionally delete the uploaded file
-    const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
-        await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
-    if (deleteAfterCopy) {
-        try {
-            await boxClient.deleteFile(fileId);
-            showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
-        } catch (err) {
-            console.error('Error deleting file from Box:', err);
-            showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
-        }
-    }
 }
 
 /**
@@ -228,6 +215,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'send_chat_message') {
     handleChatMessage(request.message, sender.tab);
     return true; // Indicates that the response is sent asynchronously
+  } else if (request.action === 'chat_closed') {
+    handleChatClosed(sender.tab);
+    return true;
   }
 });
 
@@ -265,4 +255,24 @@ async function handleChatMessage(message, tab) {
       message: `Error: ${error.message}` 
     });
   }
+}
+
+async function handleChatClosed(tab) {
+  if (!currentFileId) return;
+
+  const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
+    await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
+
+  if (deleteAfterCopy) {
+    try {
+      await boxClient.deleteFile(currentFileId);
+      showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
+    } catch (err) {
+      console.error('Error deleting file from Box:', err);
+      showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
+    }
+  }
+  // Reset for next time
+  currentFileId = null;
+  conversationHistory = [];
 }
