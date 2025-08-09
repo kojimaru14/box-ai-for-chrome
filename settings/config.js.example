@@ -1,5 +1,7 @@
 export const BOX__CLIENT_ID = "YOUR_CLIENT_ID_HERE"; // Replace with your actual Box client ID
 export const BOX__CLIENT_SECRET = "YOUR_CLIENT_SECRET_HERE"; // Replace with your actual Box client secret
+export const ALLOWED_DOMAINS = ["example.com"]; // The allowed email domains for Box users. Leave empty to disable this feature
+
 export const defaultCustomInstructions = [
   {
     id: 'BOX_AI_CUSTOM_INSTRUCTION',
@@ -9,6 +11,7 @@ export const defaultCustomInstructions = [
     model: '',
     language: 'en',
     enabled: true,
+    targetItems: null,
   },
   {
     id: 'BOX_AI_DRAFT_JIRA',
@@ -18,6 +21,7 @@ export const defaultCustomInstructions = [
     model: '',
     language: 'en',
     enabled: true,
+    targetItems: null,
   },
   {
     id: 'BOX_AI_SUMMARIZE_TEXTS',
@@ -27,6 +31,7 @@ export const defaultCustomInstructions = [
     model: '',
     language: 'en',
     enabled: true,
+    targetItems: null,
   },
   {
     id: 'BOX_AI_PROOFREAD_TEXTS',
@@ -36,6 +41,7 @@ export const defaultCustomInstructions = [
     model: '',
     language: 'en',
     enabled: true,
+    targetItems: null,
   },
   {
     id: 'BOX_AI_TRANSLATE_BETWEEN_EN_JA',
@@ -45,6 +51,7 @@ export const defaultCustomInstructions = [
     model: '',
     language: 'en',
     enabled: true,
+    targetItems: null,
   },
   {
     id: 'BOX_AI_DRAFT_ARTICLE',
@@ -54,6 +61,7 @@ export const defaultCustomInstructions = [
     model: '',
     language: 'en',
     enabled: true,
+    targetItems: null,
   },
   {
     id: 'BOX_AI_EXPLAIN_CODE',
@@ -63,5 +71,17 @@ export const defaultCustomInstructions = [
     model: '',
     language: 'en',
     enabled: true,
+    targetItems: null,
+  },
+  {
+    id: 'BOX_AI_INTERNAL_INSTRUCTION',
+    title: 'Internal Instruction',
+    instruction: 'This is an internal instruction. Only users with allowed email domains can see this instruction.',
+    sortOrder: 7,
+    model: '',
+    language: 'en',
+    enabled: false,   // Internal instructions should NOT be enabled by default. Users need to enable them manually via options page.
+    isInternal: true, // Enable this flag to show this instruction only for users with allowed email domains
+    targetItems: null,
   },
 ]; // Default set of custom instructions to use when user has no saved instructions

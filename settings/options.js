@@ -1,4 +1,4 @@
-import { defaultCustomInstructions } from './config.js';
+import { defaultCustomInstructions, ALLOWED_DOMAINS } from './config.js';
 import BOX from '../utils/box.js';
 import { displayBanner } from '../utils/banner.js';
 import '../vendor/box-ui-elements/picker.js';
@@ -28,6 +28,8 @@ async function loginBoxOAuth() {
         const userInfo = await boxClient.getUser();
         document.getElementById('status').textContent = `Logged in as ${userInfo.name} (${userInfo.login})`;
         await initializeFolderPicker();
+        await loadModels();
+        initCustomInstructions(userInfo);
     });
 }
 
@@ -66,9 +68,10 @@ async function initializeFolderPicker() {
 
 (async () => {
     const token = await boxClient.getBoxAccessToken();
+    let userInfo = null;
     if (token) {
         try {
-            const userInfo = await boxClient.getUser();
+            userInfo = await boxClient.getUser();
             document.getElementById('status').textContent =
                 `Logged in as ${userInfo.name} (${userInfo.login})`;
         } catch (e) {
@@ -81,6 +84,8 @@ async function initializeFolderPicker() {
             `Selected Folder: ${destinationFolder.name} (ID: ${destinationFolder.id})`;
     }
     await initializeFolderPicker();
+    // Call initCustomInstructions after initial setup
+    initCustomInstructions(userInfo);
 })();
 
 document.getElementById('BTN__BOX_LOGIN').addEventListener('click', loginBoxOAuth);
@@ -110,7 +115,6 @@ let modalPreviousModel = '';
 // Load models then initialize custom instructions UI
 (async () => {
   await loadModels();
-  initCustomInstructions();
 })();
 document.getElementById('add-instruction').addEventListener('click', () => openEditModal());
 
@@ -121,10 +125,25 @@ document.getElementById('modal-cancel').addEventListener('click', closeModal);
 /**
  * Load and render custom instructions from storage.
  */
-async function initCustomInstructions() {
+async function initCustomInstructions(user) {
   const { BOX__CUSTOM_INSTRUCTIONS: stored = [] } = await chrome.storage.local.get({ BOX__CUSTOM_INSTRUCTIONS: [] });
+  let isInternalUser = false;
+  if (user && Array.isArray(ALLOWED_DOMAINS) && ALLOWED_DOMAINS.length > 0) {
+    const userDomain = user.login.split('@')[1];
+    isInternalUser = userDomain && ALLOWED_DOMAINS.includes(userDomain);
+  }
+
+  let source = stored.length > 0 ? stored : defaultCustomInstructions;
+
+  // Filter instructions based on internal user status
+  source = source.filter(item => {
+    if (item.isInternal) {
+      return isInternalUser;
+    }
+    return true;
+  });
+
   // Normalize language (default to English) on load
-  const source = stored.length > 0 ? stored : defaultCustomInstructions;
   const items = source.map(item => ({ ...item, language: item.language || 'en', enabled: item.enabled === false ? false : true }));
   currentItems = items;
   renderInstructionsTable(currentItems);
