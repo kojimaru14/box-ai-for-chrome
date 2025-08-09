@@ -92,6 +92,18 @@
       <label class="form-check-label" for="advanced-options-toggle">Show advanced options</label>
     </div>
       <div class="collapse" id="collapseTextArea">
+        <label for="modal-targetItems">Items Option</label>
+        <textarea id="modal-targetItems" rows="8" placeholder='// Leave empty to use the uploaded file, or specify items like this:
+        [
+          {
+            "type": "file",
+            "id": "###ID_OF_UPLOADED_TEXT_FILE###"
+          },
+          {
+            "type": "file",
+            "id": "9842787262"
+          }
+        ]'></textarea>
         <label for="modal-agentConfig">Agent Config</label>
         <textarea id="modal-agentConfig" rows="8"></textarea>
       </div>

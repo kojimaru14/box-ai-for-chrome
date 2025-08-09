@@ -24,18 +24,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "displayBanner" && sender.tab) {
         showBannerInTab(sender.tab.id, request.message, request.bannerType);
     } else if (request.type === 'PROCESS_CUSTOM_INSTRUCTION' && sender.tab) {
+        let finalInstruction = request.instruction;
+        if (finalInstruction.includes('###SELECTED_TEXTS###')) {
+            finalInstruction = finalInstruction.replace('###SELECTED_TEXTS###', request.selectionText);
+        }
+        if (finalInstruction.includes('###NAME_OF_UPLOADED_TEXT_FILE###')) {
+            finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_TEXT_FILE###', request.finalFileName);
+        }
         // First, tell the content script to open chat and display the user's instruction
         chrome.tabs.sendMessage(sender.tab.id,{
             action: "open_chat_with_thinking_indicator",
-            instruction: request.instruction
+            instruction: finalInstruction
         });
         // Then, process the custom instruction
         processInitialBoxAIQuery(
             request.finalFileName,
             request.selectionText,
-            request.instruction,
+            finalInstruction, // Pass the updated instruction
             request.modelConfig,
-            sender.tab
+            sender.tab,
+            request.targetItems
         );
     }
 });
@@ -54,20 +62,28 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     function: promptForCustomInstructionAndSendMessage,
-                    args: [info.selectionText, finalFileName, item.modelConfig]
+                    args: [info.selectionText, finalFileName, item.modelConfig, item.targetItems]
                 });
             } else {
+                let finalInstruction = item.instruction;
+                if (finalInstruction.includes('###SELECTED_TEXTS###')) {
+                    finalInstruction = finalInstruction.replace('###SELECTED_TEXTS###', info.selectionText);
+                }
+                if (finalInstruction.includes('###NAME_OF_UPLOADED_TEXT_FILE###')) {
+                    finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_TEXT_FILE###', finalFileName);
+                }
                 // Case 2: Pre-defined instruction - open chat and show thinking indicator
                 chrome.tabs.sendMessage(tab.id, {
                     action: "open_chat_with_thinking_indicator",
-                    instruction: item.instruction
+                    instruction: finalInstruction
                 });
                 processInitialBoxAIQuery(
                     finalFileName,
                     info.selectionText,
-                    item.instruction,
+                    finalInstruction,
                     item.modelConfig,
-                    tab
+                    tab,
+                    item.targetItems
                 );
             }
         }
@@ -94,13 +110,13 @@ function sanitizeFilename(input) {
  * @param {string} [modelConfig] - Optional AI model ID to use.
  * @param {object} tab - The Chrome tab object for displaying banners.
  */
-async function handleBoxAIQuery(fileId, query, modelConfig, tab, conversationHistory = []) {
+async function handleBoxAIQuery(query, targetItems, modelConfig, tab, conversationHistory = []) {
     let attempt = 0;
     const maxAttempts = 5;
     while (attempt < maxAttempts) {
         try {
             showBannerInTab(tab.id, "Asking Box AI...", "info");
-            const response = await boxClient.askBoxAI(fileId, query, modelConfig, conversationHistory);
+            const response = await boxClient.askBoxAI(query, targetItems, modelConfig, conversationHistory);
 
             if (!response.ok) {
                 throw new Error(`Box AI API request failed: ${response.statusText}`);
@@ -119,7 +135,7 @@ async function handleBoxAIQuery(fileId, query, modelConfig, tab, conversationHis
 /**
  * Generic handler for Box AI requests with a custom instruction query.
  */
-async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelConfig, tab) {
+async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelConfig, tab, targetItems = null) {
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
         showBannerInTab(tab.id, "Box access token not found. Please login via Options.", "error");
@@ -127,22 +143,58 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
         return console.error('Box access token not found. Please login via Options.');
     }
 
-    showBannerInTab(tab.id, "Uploading file to Box...", "info");
-    const { BOX__DESTINATION_FOLDER_ID: destinationFolder } = await chrome.storage.local.get('BOX__DESTINATION_FOLDER_ID');
-    const fileId = await boxClient.uploadFile(
-        fileName,
-        new Blob([text], { type: 'text/markdown' }),
-        destinationFolder.id || '0'
-    );
-    if (!fileId) {
-        showBannerInTab(tab.id, "Failed to upload file to Box.", "error");
-        chrome.tabs.sendMessage(tab.id, { action: "receive_chat_message", message: "Failed to upload file to Box." });
-        return console.error('Failed to upload file to Box');
+    let fileId = null;
+    let finalTargetItems = targetItems;
+
+    // If targetItems is null or empty, initialize it with the placeholder for the uploaded file.
+    if (!finalTargetItems || finalTargetItems.length === 0) {
+        finalTargetItems = [
+            {
+                id: '###ID_OF_UPLOADED_TEXT_FILE###',
+                type: 'file',
+            }
+        ];
     }
 
-    currentFileId = fileId;
-    showBannerInTab(tab.id, "File uploaded, asking Box AI...", "info");
-    const response = await handleBoxAIQuery(fileId, instructionQuery, modelConfig, tab);
+    // Determine if a file upload is necessary based on targetItems:
+    // 1. If any item in targetItems has the specific placeholder ID, an upload is needed.
+    // 2. Otherwise (targetItems exists and no item contains the placeholder), no upload is needed.
+    const needsUploadPlaceholder = (finalTargetItems && finalTargetItems.some(item => item.id === "###ID_OF_UPLOADED_TEXT_FILE###"));
+    const shouldUpload = needsUploadPlaceholder;
+
+    if (shouldUpload) {
+        showBannerInTab(tab.id, "Uploading file to Box...", "info");
+        const { BOX__DESTINATION_FOLDER_ID: destinationFolder } = await chrome.storage.local.get('BOX__DESTINATION_FOLDER_ID');
+        fileId = await boxClient.uploadFile(
+            fileName,
+            new Blob([text], { type: 'text/markdown' }),
+            destinationFolder.id || '0'
+        );
+        if (!fileId) {
+            showBannerInTab(tab.id, "Failed to upload file to Box.", "error");
+            chrome.tabs.sendMessage(tab.id, { action: "receive_chat_message", message: "Failed to upload file to Box." });
+            return console.error('Failed to upload file to Box');
+        }
+
+        uploadedFileId = fileId;
+
+        if (!finalTargetItems || finalTargetItems.length === 0) {
+            finalTargetItems = [{ type: 'file', id: fileId }];
+        } else if (needsUploadPlaceholder) {
+            // Replace the placeholder ID with the actual fileId
+            finalTargetItems = finalTargetItems.map(item => {
+                if (item.id === "###ID_OF_UPLOADED_TEXT_FILE###") {
+                    return { ...item, id: fileId };
+                }
+                return item;
+            });
+        }
+    }
+
+    currentModelConfig = modelConfig; // Store the modelConfig for subsequent chat messages
+    currentTargetItems = finalTargetItems; // Store targetItems for subsequent chat messages
+    showBannerInTab(tab.id, "Asking Box AI...", "info");
+    const response = await handleBoxAIQuery(instructionQuery, finalTargetItems, modelConfig, tab, []);
     const aiReply = response.answer || "Failed to get response from Box AI.";
 
     conversationHistory = [
@@ -187,7 +239,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 
-function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig) {
+function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig, targetItems) {
     const instruction = prompt('Enter your instruction for Box AI:');
     if (!instruction) {
         return;
@@ -197,7 +249,8 @@ function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, 
         instruction,
         selectionText,
         finalFileName,
-        modelConfig
+        modelConfig,
+        targetItems
     });
 }
 
@@ -209,7 +262,9 @@ chrome.action.onClicked.addListener((tab) => {
 
 // --- Chat Functionality ---
 let conversationHistory = [];
-let currentFileId = null; // To keep track of the file in conversation
+let currentTargetItems = null; // To keep track of targetItems if no file was uploaded
+let currentModelConfig = null; // To keep track of the model config in conversation
+let uploadedFileId = null; // To keep track of the uploaded file in conversation
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'send_chat_message') {
@@ -222,7 +277,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function handleChatMessage(message, tab) {
-  if (!currentFileId) {
+  if (!currentTargetItems) {
     showBannerInTab(tab.id, "Please start a new query from a selection first.", "info");
     return;
   }
@@ -232,7 +287,7 @@ async function handleChatMessage(message, tab) {
   try {
     // The history sent to the API should be all previous, complete exchanges.
     const historyToSend = [...conversationHistory];
-    const response = await handleBoxAIQuery(currentFileId, userPrompt, null, tab, historyToSend);
+    const response = await handleBoxAIQuery(userPrompt, currentTargetItems, currentModelConfig, tab, historyToSend);
     const aiReply = response.answer || 'Sorry, I couldn\'t get a response.';
 
     // Add the new, complete exchange to the history.
@@ -258,21 +313,21 @@ async function handleChatMessage(message, tab) {
 }
 
 async function handleChatClosed(tab) {
-  if (!currentFileId) return;
+  if (!currentTargetItems) return;
 
   const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
     await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
 
-  if (deleteAfterCopy) {
+  if (deleteAfterCopy && uploadedFileId) {
     try {
-      await boxClient.deleteFile(currentFileId);
+      await boxClient.deleteFile(uploadedFileId);
       showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
     } catch (err) {
-      console.error('Error deleting file from Box:', err);
+      console.error("Error deleting file from Box:", err);
       showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
     }
+    // Reset for next time
+    currentModelConfig = null;
+  uploadedFileId = null;
   }
-  // Reset for next time
-  currentFileId = null;
-  conversationHistory = [];
 }
