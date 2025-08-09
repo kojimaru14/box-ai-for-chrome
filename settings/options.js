@@ -376,7 +376,7 @@ async function onModalSave() {
     try {
       targetItems = JSON.parse(targetItemsValue);
     } catch (err) {
-      displayBanner(`Invalid JSON in MultiDoc option field`, 'error');
+      displayBanner(`Invalid JSON in Target Contents field`, 'error');
       saveBtn.disabled = false;
       return;
     }
