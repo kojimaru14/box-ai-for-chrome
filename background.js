@@ -18,33 +18,64 @@ function showBannerInTab(tabId, message, type) {
     });
 }
 
+function getFinalInstruction(instruction, selectionText, finalFileName) {
+    let finalInstruction = instruction;
+    if (finalInstruction.includes('###SELECTED_TEXTS###') && selectionText) {
+        finalInstruction = finalInstruction.replace('###SELECTED_TEXTS###', selectionText);
+    }
+    if (finalInstruction.includes('###NAME_OF_UPLOADED_FILE###') && finalFileName) {
+        finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_FILE###', finalFileName);
+    }
+    return finalInstruction;
+}
+
+function initiateBoxAIQuery(instruction, selectionText, finalFileName, modelConfig, tab, targetItems) {
+    const finalInstruction = getFinalInstruction(instruction, selectionText, finalFileName);
+
+    // First, tell the content script to open chat and display the user's instruction
+    chrome.tabs.sendMessage(tab.id, {
+        type: "open_chat_with_thinking_indicator",
+        instruction: finalInstruction
+    });
+
+    // Then, process the custom instruction
+    processInitialBoxAIQuery(
+        finalFileName,
+        selectionText,
+        finalInstruction, // Pass the updated instruction
+        modelConfig,
+        tab,
+        targetItems
+    );
+}
+
 // Listener for messages from content scripts or custom instruction prompts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message in background script:', request);
-    if (request.type === "displayBanner" && sender.tab) {
-        showBannerInTab(sender.tab.id, request.message, request.bannerType);
-    } else if (request.type === 'PROCESS_CUSTOM_INSTRUCTION' && sender.tab) {
-        let finalInstruction = request.instruction;
-        if (finalInstruction.includes('###SELECTED_TEXTS###')) {
-            finalInstruction = finalInstruction.replace('###SELECTED_TEXTS###', request.selectionText);
-        }
-        if (finalInstruction.includes('###NAME_OF_UPLOADED_FILE###')) {
-            finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_FILE###', request.finalFileName);
-        }
-        // First, tell the content script to open chat and display the user's instruction
-        chrome.tabs.sendMessage(sender.tab.id,{
-            action: "open_chat_with_thinking_indicator",
-            instruction: finalInstruction
-        });
-        // Then, process the custom instruction
-        processInitialBoxAIQuery(
-            request.finalFileName,
-            request.selectionText,
-            finalInstruction, // Pass the updated instruction
-            request.modelConfig,
-            sender.tab,
-            request.targetItems
-        );
+    switch (request.type) {
+        case "displayBanner":
+            if (sender.tab) {
+                showBannerInTab(sender.tab.id, request.message, request.bannerType);
+            }
+            break;
+        case 'PROCESS_CUSTOM_INSTRUCTION':
+            if (sender.tab) {
+                initiateBoxAIQuery(
+                    request.instruction,
+                    request.selectionText,
+                    request.finalFileName,
+                    request.modelConfig,
+                    sender.tab,
+                    request.targetItems
+                );
+            }
+            break;
+        case 'send_chat_message':
+            handleChatMessage(request.message, sender.tab);
+            return true; // Indicates that the response is sent asynchronously
+        case 'chat_closed':
+            handleChatClosed(sender.tab);
+            return true;
     }
 });
 
@@ -62,25 +93,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     function: promptForCustomInstructionAndSendMessage,
-                    args: [info.selectionText, finalFileName, item.modelConfig, item.targetItems]
+                    args: [info.selectionText, finalFileName, item.modelConfig, item.targetItems ? JSON.parse(JSON.stringify(item.targetItems)) : null]
                 });
             } else {
-                let finalInstruction = item.instruction;
-                if (finalInstruction.includes('###SELECTED_TEXTS###')) {
-                    finalInstruction = finalInstruction.replace('###SELECTED_TEXTS###', info.selectionText);
-                }
-                if (finalInstruction.includes('###NAME_OF_UPLOADED_FILE###')) {
-                    finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_FILE###', finalFileName);
-                }
-                // Case 2: Pre-defined instruction - open chat and show thinking indicator
-                chrome.tabs.sendMessage(tab.id, {
-                    action: "open_chat_with_thinking_indicator",
-                    instruction: finalInstruction
-                });
-                processInitialBoxAIQuery(
-                    finalFileName,
+                // Case 2: Pre-defined instruction
+                initiateBoxAIQuery(
+                    item.instruction,
                     info.selectionText,
-                    finalInstruction,
+                    finalFileName,
                     item.modelConfig,
                     tab,
                     item.targetItems
@@ -139,7 +159,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
     const accessToken = await boxClient.getBoxAccessToken();
     if (!accessToken) {
         showBannerInTab(tab.id, "Box access token not found. Please login via Options.", "error");
-        chrome.tabs.sendMessage(tab.id, { action: "receive_chat_message", message: "Box access token not found. Please login via Options." });
+        chrome.tabs.sendMessage(tab.id, { type: "receive_chat_message", message: "Box access token not found. Please login via Options." });
         return console.error('Box access token not found. Please login via Options.');
     }
 
@@ -172,7 +192,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
         );
         if (!fileId) {
             showBannerInTab(tab.id, "Failed to upload file to Box.", "error");
-            chrome.tabs.sendMessage(tab.id, { action: "receive_chat_message", message: "Failed to upload file to Box." });
+            chrome.tabs.sendMessage(tab.id, { type: "receive_chat_message", message: "Failed to upload file to Box." });
             return console.error('Failed to upload file to Box');
         }
 
@@ -193,7 +213,6 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
 
     currentModelConfig = modelConfig; // Store the modelConfig for subsequent chat messages
     currentTargetItems = finalTargetItems; // Store targetItems for subsequent chat messages
-    showBannerInTab(tab.id, "Asking Box AI...", "info");
     const response = await handleBoxAIQuery(instructionQuery, finalTargetItems, modelConfig, tab, []);
     const aiReply = response.answer || "Failed to get response from Box AI.";
 
@@ -206,7 +225,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
     ];
 
     chrome.tabs.sendMessage(tab.id, { 
-        action: "receive_chat_message", 
+        type: "receive_chat_message", 
         message: aiReply 
     });
 }
@@ -257,7 +276,7 @@ function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, 
 // When the user clicks on the extension action (toolbar icon).
 chrome.action.onClicked.addListener((tab) => {
   // Send a message to the active tab to open the chat window.
-  chrome.tabs.sendMessage(tab.id, { action: "open_chat" });
+  chrome.tabs.sendMessage(tab.id, { type: "open_chat" });
 });
 
 // --- Chat Functionality ---
@@ -266,15 +285,6 @@ let currentTargetItems = null; // To keep track of targetItems if no file was up
 let currentModelConfig = null; // To keep track of the model config in conversation
 let uploadedFileId = null; // To keep track of the uploaded file in conversation
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'send_chat_message') {
-    handleChatMessage(request.message, sender.tab);
-    return true; // Indicates that the response is sent asynchronously
-  } else if (request.action === 'chat_closed') {
-    handleChatClosed(sender.tab);
-    return true;
-  }
-});
 
 async function handleChatMessage(message, tab) {
   if (!currentTargetItems) {
@@ -299,14 +309,14 @@ async function handleChatMessage(message, tab) {
 
     // Send the reply back to the content script
     chrome.tabs.sendMessage(tab.id, { 
-      action: 'receive_chat_message', 
+      type: 'receive_chat_message', 
       message: aiReply 
     });
 
   } catch (error) {
     console.error('Error handling chat message:', error);
     chrome.tabs.sendMessage(tab.id, { 
-      action: 'receive_chat_message', 
+      type: 'receive_chat_message', 
       message: `Error: ${error.message}` 
     });
   }
@@ -326,8 +336,10 @@ async function handleChatClosed(tab) {
       console.error("Error deleting file from Box:", err);
       showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
     }
-    // Reset for next time
-    currentModelConfig = null;
-    uploadedFileId = null;
   }
+  // Reset conversation state
+  conversationHistory = [];
+  currentTargetItems = null;
+  currentModelConfig = null;
+  uploadedFileId = null;
 }

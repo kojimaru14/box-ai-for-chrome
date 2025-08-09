@@ -134,7 +134,7 @@ const setupChatUI = () => {
     const message = input.value.trim();
     if (message) {
       displayMessage(message, 'user');
-      chrome.runtime.sendMessage({ action: 'send_chat_message', message });
+      chrome.runtime.sendMessage({ type: 'send_chat_message', message });
       input.value = '';
     }
   };
@@ -168,7 +168,7 @@ const setupChatUI = () => {
 
   closeButton.addEventListener('click', () => {
     chatContainer.style.display = 'none';
-    chrome.runtime.sendMessage({ action: 'chat_closed' });
+    chrome.runtime.sendMessage({ type: 'chat_closed' });
   });
 
   minimizeButton.addEventListener('click', (e) => {
@@ -195,7 +195,7 @@ const setupChatUI = () => {
   // Chrome Runtime Listener
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Received message in chat.js:', request);
-    switch (request.action) {
+    switch (request.type) {
       case 'open_chat_with_thinking_indicator':
         messagesContainer.innerHTML = ''; // Clear previous messages
         displayMessage(request.instruction, 'user');
