@@ -80,7 +80,7 @@ export const defaultCustomInstructions = [
     sortOrder: 7,
     model: '',
     language: 'en',
-    enabled: false, // Internal instructions are not enabled by default
+    enabled: false,   // Internal instructions should NOT be enabled by default. Users need to enable them manually via options page.
     isInternal: true, // Enable this flag to show this instruction only for users with allowed email domains
     targetItems: null,
   },
