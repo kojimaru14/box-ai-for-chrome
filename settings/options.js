@@ -28,6 +28,7 @@ async function loginBoxOAuth() {
         const userInfo = await boxClient.getUser();
         document.getElementById('status').textContent = `Logged in as ${userInfo.name} (${userInfo.login})`;
         await initializeFolderPicker();
+        await loadModels();
         initCustomInstructions(userInfo);
     });
 }
