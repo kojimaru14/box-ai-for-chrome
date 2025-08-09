@@ -28,8 +28,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (finalInstruction.includes('###SELECTED_TEXTS###')) {
             finalInstruction = finalInstruction.replace('###SELECTED_TEXTS###', request.selectionText);
         }
-        if (finalInstruction.includes('###NAME_OF_UPLOADED_TEXT_FILE###')) {
-            finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_TEXT_FILE###', request.finalFileName);
+        if (finalInstruction.includes('###NAME_OF_UPLOADED_FILE###')) {
+            finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_FILE###', request.finalFileName);
         }
         // First, tell the content script to open chat and display the user's instruction
         chrome.tabs.sendMessage(sender.tab.id,{
@@ -69,8 +69,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
                 if (finalInstruction.includes('###SELECTED_TEXTS###')) {
                     finalInstruction = finalInstruction.replace('###SELECTED_TEXTS###', info.selectionText);
                 }
-                if (finalInstruction.includes('###NAME_OF_UPLOADED_TEXT_FILE###')) {
-                    finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_TEXT_FILE###', finalFileName);
+                if (finalInstruction.includes('###NAME_OF_UPLOADED_FILE###')) {
+                    finalInstruction = finalInstruction.replace('###NAME_OF_UPLOADED_FILE###', finalFileName);
                 }
                 // Case 2: Pre-defined instruction - open chat and show thinking indicator
                 chrome.tabs.sendMessage(tab.id, {
@@ -150,7 +150,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
     if (!finalTargetItems || finalTargetItems.length === 0) {
         finalTargetItems = [
             {
-                id: '###ID_OF_UPLOADED_TEXT_FILE###',
+                id: '###ID_OF_UPLOADED_FILE###',
                 type: 'file',
             }
         ];
@@ -159,7 +159,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
     // Determine if a file upload is necessary based on targetItems:
     // 1. If any item in targetItems has the specific placeholder ID, an upload is needed.
     // 2. Otherwise (targetItems exists and no item contains the placeholder), no upload is needed.
-    const needsUploadPlaceholder = (finalTargetItems && finalTargetItems.some(item => item.id === "###ID_OF_UPLOADED_TEXT_FILE###"));
+    const needsUploadPlaceholder = (finalTargetItems && finalTargetItems.some(item => item.id === "###ID_OF_UPLOADED_FILE###"));
     const shouldUpload = needsUploadPlaceholder;
 
     if (shouldUpload) {
@@ -183,7 +183,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
         } else if (needsUploadPlaceholder) {
             // Replace the placeholder ID with the actual fileId
             finalTargetItems = finalTargetItems.map(item => {
-                if (item.id === "###ID_OF_UPLOADED_TEXT_FILE###") {
+                if (item.id === "###ID_OF_UPLOADED_FILE###") {
                     return { ...item, id: fileId };
                 }
                 return item;
@@ -328,6 +328,6 @@ async function handleChatClosed(tab) {
     }
     // Reset for next time
     currentModelConfig = null;
-  uploadedFileId = null;
+    uploadedFileId = null;
   }
 }
