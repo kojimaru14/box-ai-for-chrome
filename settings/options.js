@@ -258,7 +258,7 @@ async function openEditModal(id) {
   editingItemId = id || crypto.randomUUID();
   const isNew = !id;
   document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
-  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '', modelConfig: '', enabled: true };
+  const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '', modelConfig: '', targetItems: null, enabled: true };
   modalModelConfig = item.modelConfig || '';
   // Initialize previous model for potential revert on failure
   modalPreviousModel = item.model || '';
@@ -266,6 +266,7 @@ async function openEditModal(id) {
   document.getElementById('modal-instruction').value = item.instruction;
   document.getElementById('modal-sortOrder').value = item.sortOrder;
   document.getElementById('modal-enabled').checked = item.enabled;
+  document.getElementById('modal-targetItems').value = item.targetItems ? JSON.stringify(item.targetItems, undefined, 4) : '';
   document.getElementById('modal-agentConfig').value = modalModelConfig ? JSON.stringify(modalModelConfig, undefined, 4) : '';
   // Populate model select options
   const modelSelect = document.getElementById('modal-model');
@@ -350,6 +351,17 @@ async function onModalSave() {
   const language = document.getElementById('modal-language').value;
   const enabled = document.getElementById('modal-enabled').checked;
   const modelConfigValue = document.getElementById('modal-agentConfig').value;
+  const targetItemsValue = document.getElementById('modal-targetItems').value;
+  let targetItems = [];
+  if (targetItemsValue) {
+    try {
+      targetItems = JSON.parse(targetItemsValue);
+    } catch (err) {
+      displayBanner(`Invalid JSON in MultiDoc option field`, 'error');
+      saveBtn.disabled = false;
+      return;
+    }
+  }
   const modelConfig = await getModalConfig(model, language, modelConfigValue);
 
   if (modelConfig === null) {
@@ -359,7 +371,7 @@ async function onModalSave() {
   modalModelConfig = modelConfig;
 
   const existingIndex = currentItems.findIndex(i => i.id === editingItemId);
-  const item = { id: editingItemId, title, instruction, sortOrder, model, language, enabled, modelConfig: modalModelConfig };
+  const item = { id: editingItemId, title, instruction, sortOrder, model, language, enabled, modelConfig: modalModelConfig, targetItems };
   if (existingIndex >= 0) {
     currentItems[existingIndex] = item;
   } else {
@@ -381,6 +393,7 @@ async function onModalSave() {
  */
 function closeModal() {
   document.getElementById('instruction-modal').classList.add('hidden');
+  document.getElementById('modal-targetItems').value = '';
   editingItemId = null;
 }
 

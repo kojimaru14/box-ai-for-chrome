@@ -24,7 +24,6 @@ EXCLUDE_PATTERNS=(
   "*.md"
   "*.zip"
   "zip-extension.sh"
-  "settings/config.js"
 )
 
 # Build zip exclude arguments

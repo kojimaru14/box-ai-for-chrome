@@ -181,11 +181,11 @@ class BOX {
         return await res.json();
     }
 
-    async askBoxAI(fileId, query, agentConfig, dialog = null) {
+    async askBoxAI(query, targetItems, agentConfig, dialog = null) {
         const payload = {
-            mode: 'single_item_qa',
             prompt: `${query}`,
-            items: [{ type: 'file', id: `${fileId}` }]
+            items: targetItems,
+            mode: targetItems.length > 1 ? 'multiple_item_qa' : 'single_item_qa',
         };
         if (dialog) payload.dialogue_history = dialog;
         if (agentConfig) payload.ai_agent = agentConfig;

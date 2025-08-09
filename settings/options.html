@@ -69,7 +69,12 @@
     <label for="modal-title">Title</label>
     <input id="modal-title" type="text" placeholder="Enter a title for this instruction" />
     <label for="modal-instruction">Instruction</label>
-    <textarea id="modal-instruction" rows="8" placeholder="Enter the instruction for the AI. Leave blank to be prompted when used."></textarea>
+    <textarea id="modal-instruction" rows="8" placeholder="Enter the instruction for the AI. Leave blank to be prompted when used.
+
+Tips:
+- Use ###NAME_OF_UPLOADED_FILE### to refer to the uploaded file (useful when you use multiple_item_qa mode)
+- Use ###SELECTED_TEXTS### to refer to the selected text in the current tab (useful when you use hubs in single_item_qa mode) 
+    "></textarea>
     <label for="modal-model">Model</label>
     <select id="modal-model"></select>
     <label for="modal-language">Language</label>
@@ -92,8 +97,20 @@
       <label class="form-check-label" for="advanced-options-toggle">Show advanced options</label>
     </div>
       <div class="collapse" id="collapseTextArea">
+        <label for="modal-targetItems">Target Content</label>
+        <textarea id="modal-targetItems" rows="8" placeholder='// Leave empty to use the uploaded file, or specify items like this:
+[
+  {
+    "type": "file",
+    "id": "###ID_OF_UPLOADED_FILE###"
+  },
+  {
+    "type": "file", // If you use "hubs", you can only use one item
+    "id": "1234567890"
+  },
+]'></textarea>
         <label for="modal-agentConfig">Agent Config</label>
-        <textarea id="modal-agentConfig" rows="8"></textarea>
+        <textarea id="modal-agentConfig" rows="8" placeholder='// Leave empty to use the default agent'></textarea>
       </div>
 
     <div class="modal-actions">
