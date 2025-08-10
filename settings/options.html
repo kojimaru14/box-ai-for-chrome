@@ -75,13 +75,19 @@ Tips:
 - Use ###NAME_OF_UPLOADED_FILE### to refer to the uploaded file (useful when you use multiple_item_qa mode)
 - Use ###SELECTED_TEXTS### to refer to the selected text in the current tab (useful when you use hubs in single_item_qa mode) 
     "></textarea>
-    <label for="modal-model">Model</label>
-    <select id="modal-model"></select>
-    <label for="modal-language">Language</label>
-    <select id="modal-language">
-      <option value="en">English</option>
-      <option value="ja">Japanese</option>
-    </select>
+    <div class="row">
+      <div class="col">
+        <label for="modal-model">Model</label>
+        <select id="modal-model"></select>
+      </div>
+      <div class="col">
+        <label for="modal-language">Language</label>
+        <select id="modal-language">
+          <option value="en">English</option>
+          <option value="ja">Japanese</option>
+        </select>
+      </div>
+    </div>
     <label for="modal-sortOrder">Sort Order</label>
     <input id="modal-sortOrder" type="number" min="0" />
     <!-- Hidden checkbox for enabling/disabling the instruction -->
