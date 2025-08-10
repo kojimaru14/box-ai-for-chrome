@@ -516,6 +516,84 @@
     "__typename": "AiModelConnectionEdge"
   },
   {
+      "node": {
+          "id": "openai__gpt_5",
+          "name": "openai__gpt_5",
+          "uiName": "OpenAI GPT 5",
+          "providerName": "OPENAI",
+          "supportedPurposes": [
+              "IMAGE",
+              "CHAT"
+          ],
+          "modelUsageData": {
+              "last30DaysUsageSum": 0,
+              "lastUsed": null,
+              "__typename": "AiModelUsageData"
+          },
+          "documentationReference": null,
+          "releaseState": "GA",
+          "lifecycle": {
+              "state": "ACTIVE",
+              "validUntil": null,
+              "__typename": "AiModelLifecycle"
+          },
+          "__typename": "AiModel"
+      },
+      "__typename": "AiModelConnectionEdge"
+  },
+  {
+      "node": {
+          "id": "openai__gpt_5_mini",
+          "name": "openai__gpt_5_mini",
+          "uiName": "OpenAI GPT 5 Mini",
+          "providerName": "OPENAI",
+          "supportedPurposes": [
+              "IMAGE",
+              "CHAT"
+          ],
+          "modelUsageData": {
+              "last30DaysUsageSum": 0,
+              "lastUsed": null,
+              "__typename": "AiModelUsageData"
+          },
+          "documentationReference": null,
+          "releaseState": "GA",
+          "lifecycle": {
+              "state": "ACTIVE",
+              "validUntil": null,
+              "__typename": "AiModelLifecycle"
+          },
+          "__typename": "AiModel"
+      },
+      "__typename": "AiModelConnectionEdge"
+  },
+  {
+      "node": {
+          "id": "openai__gpt_5_nano",
+          "name": "openai__gpt_5_nano",
+          "uiName": "OpenAI GPT 5 Nano",
+          "providerName": "OPENAI",
+          "supportedPurposes": [
+              "IMAGE",
+              "CHAT"
+          ],
+          "modelUsageData": {
+              "last30DaysUsageSum": 0,
+              "lastUsed": null,
+              "__typename": "AiModelUsageData"
+          },
+          "documentationReference": null,
+          "releaseState": "GA",
+          "lifecycle": {
+              "state": "ACTIVE",
+              "validUntil": null,
+              "__typename": "AiModelLifecycle"
+          },
+          "__typename": "AiModel"
+      },
+      "__typename": "AiModelConnectionEdge"
+  },
+  {
     "node": {
       "id": "openai__o3",
       "name": "openai__o3",

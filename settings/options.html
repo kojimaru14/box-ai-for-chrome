@@ -75,13 +75,19 @@ Tips:
 - Use ###NAME_OF_UPLOADED_FILE### to refer to the uploaded file (useful when you use multiple_item_qa mode)
 - Use ###SELECTED_TEXTS### to refer to the selected text in the current tab (useful when you use hubs in single_item_qa mode) 
     "></textarea>
-    <label for="modal-model">Model</label>
-    <select id="modal-model"></select>
-    <label for="modal-language">Language</label>
-    <select id="modal-language">
-      <option value="en">English</option>
-      <option value="ja">Japanese</option>
-    </select>
+    <div class="row">
+      <div class="col">
+        <label for="modal-model">Model</label>
+        <select id="modal-model"></select>
+      </div>
+      <div class="col">
+        <label for="modal-language">Language</label>
+        <select id="modal-language">
+          <option value="en">English</option>
+          <option value="ja">Japanese</option>
+        </select>
+      </div>
+    </div>
     <label for="modal-sortOrder">Sort Order</label>
     <input id="modal-sortOrder" type="number" min="0" />
     <!-- Hidden checkbox for enabling/disabling the instruction -->
@@ -97,8 +103,8 @@ Tips:
       <label class="form-check-label" for="advanced-options-toggle">Show advanced options</label>
     </div>
       <div class="collapse" id="collapseTextArea">
-        <label for="modal-targetItems">Target Content</label>
-        <textarea id="modal-targetItems" rows="8" placeholder='// Leave empty to use the uploaded file, or specify items like this:
+        <label for="modal-targetItems">Target Contents</label>
+        <textarea id="modal-targetItems" rows="4" placeholder='// Leave empty to use the uploaded file, or specify items like this:
 [
   {
     "type": "file",
@@ -110,7 +116,7 @@ Tips:
   },
 ]'></textarea>
         <label for="modal-agentConfig">Agent Config</label>
-        <textarea id="modal-agentConfig" rows="8" placeholder='// Leave empty to use the default agent'></textarea>
+        <textarea id="modal-agentConfig" rows="4" placeholder='// Leave empty to use the default agent'></textarea>
       </div>
 
     <div class="modal-actions">
