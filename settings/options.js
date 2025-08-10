@@ -278,6 +278,10 @@ async function openEditModal(id) {
   const isNew = !id;
   document.getElementById('modal-title-label').textContent = isNew ? 'New Instruction' : 'Edit Instruction';
   const item = currentItems.find(i => i.id === id) || { id: editingItemId, title: '', instruction: '', sortOrder: 0, model: '', modelConfig: '', targetItems: null, enabled: true };
+
+  if (isNew) {
+    item.sortOrder = currentItems.length + 1;
+  }
   modalModelConfig = item.modelConfig || '';
   // Initialize previous model for potential revert on failure
   modalPreviousModel = item.model || '';
