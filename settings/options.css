@@ -230,3 +230,7 @@ button:hover {
 #advanced-options-toggle {
   margin-top: 2px;
 }
+
+.tooltip-inner {
+  text-align: left; /* Ensure text aligns left within the wider tooltip */
+}
