@@ -267,6 +267,33 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const { 
+    BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false, 
+    [tabId + '_uploadedFileId']: uploadedFileId 
+  } = await chrome.storage.local.get([
+    'BOX__DELETE_FILE_AFTER_COPY',
+    tabId + '_uploadedFileId'
+  ]);
+
+  if (deleteAfterCopy && uploadedFileId) {
+    try {
+      await boxClient.deleteFile(uploadedFileId);
+    } catch (err) {
+      console.error("Error deleting file from Box:", err);
+    }
+  }
+
+  // Clear the storage for the closed tab
+  chrome.storage.local.remove([
+    tabId + '_conversationHistory',
+    tabId + '_currentTargetItems',
+    tabId + '_currentModelConfig',
+    tabId + '_uploadedFileId'
+  ]);
+});
+
+
 function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig, targetItems) {
     const instruction = prompt('Enter your instruction for Box AI:');
     if (!instruction) {
