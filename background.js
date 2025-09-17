@@ -76,6 +76,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'chat_closed':
             handleChatClosed(sender.tab);
             return true;
+        case 'chat_opened':
+            if (sender.tab) {
+                chrome.tabs.sendMessage(sender.tab.id, { type: "clear_chat" });
+            }
+            break;
     }
 });
 
@@ -196,7 +201,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
             return console.error('Failed to upload file to Box');
         }
 
-        uploadedFileId = fileId;
+        chrome.storage.local.set({ [tab.id + '_uploadedFileId']: fileId });
 
         if (!finalTargetItems || finalTargetItems.length === 0) {
             finalTargetItems = [{ type: 'file', id: fileId }];
@@ -211,18 +216,22 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
         }
     }
 
-    currentModelConfig = modelConfig; // Store the modelConfig for subsequent chat messages
-    currentTargetItems = finalTargetItems; // Store targetItems for subsequent chat messages
     const response = await handleBoxAIQuery(instructionQuery, finalTargetItems, modelConfig, tab, []);
     const aiReply = response.answer || "Failed to get response from Box AI.";
 
-    conversationHistory = [
+    const conversationHistory = [
         {
             prompt: instructionQuery,
             answer: aiReply,
             created_at: response.created_at || new Date().toISOString()
         }
     ];
+
+    chrome.storage.local.set({
+        [tab.id + '_conversationHistory']: conversationHistory,
+        [tab.id + '_currentTargetItems']: finalTargetItems,
+        [tab.id + '_currentModelConfig']: modelConfig
+    });
 
     chrome.tabs.sendMessage(tab.id, { 
         type: "receive_chat_message", 
@@ -280,13 +289,19 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 // --- Chat Functionality ---
-let conversationHistory = [];
-let currentTargetItems = null; // To keep track of targetItems if no file was uploaded
-let currentModelConfig = null; // To keep track of the model config in conversation
-let uploadedFileId = null; // To keep track of the uploaded file in conversation
 
 
 async function handleChatMessage(message, tab) {
+  const { 
+    [tab.id + '_conversationHistory']: conversationHistory = [], 
+    [tab.id + '_currentTargetItems']: currentTargetItems, 
+    [tab.id + '_currentModelConfig']: currentModelConfig 
+  } = await chrome.storage.local.get([
+    tab.id + '_conversationHistory',
+    tab.id + '_currentTargetItems',
+    tab.id + '_currentModelConfig'
+  ]);
+
   if (!currentTargetItems) {
     showBannerInTab(tab.id, "Please start a new query from a selection first.", "info");
     return;
@@ -301,11 +316,13 @@ async function handleChatMessage(message, tab) {
     const aiReply = response.answer || 'Sorry, I couldn\'t get a response.';
 
     // Add the new, complete exchange to the history.
-    conversationHistory.push({
+    const newConversationHistory = [...conversationHistory, {
         prompt: userPrompt,
         answer: aiReply,
         created_at: response.created_at || new Date().toISOString()
-    });
+    }];
+
+    chrome.storage.local.set({ [tab.id + '_conversationHistory']: newConversationHistory });
 
     // Send the reply back to the content script
     chrome.tabs.sendMessage(tab.id, { 
@@ -323,10 +340,13 @@ async function handleChatMessage(message, tab) {
 }
 
 async function handleChatClosed(tab) {
-  if (!currentTargetItems) return;
-
-  const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
-    await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
+  const { 
+    BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false, 
+    [tab.id + '_uploadedFileId']: uploadedFileId 
+  } = await chrome.storage.local.get([
+    'BOX__DELETE_FILE_AFTER_COPY',
+    tab.id + '_uploadedFileId'
+  ]);
 
   if (deleteAfterCopy && uploadedFileId) {
     try {
@@ -338,8 +358,10 @@ async function handleChatClosed(tab) {
     }
   }
   // Reset conversation state
-  conversationHistory = [];
-  currentTargetItems = null;
-  currentModelConfig = null;
-  uploadedFileId = null;
+  chrome.storage.local.remove([
+    tab.id + '_conversationHistory',
+    tab.id + '_currentTargetItems',
+    tab.id + '_currentModelConfig',
+    tab.id + '_uploadedFileId'
+  ]);
 }

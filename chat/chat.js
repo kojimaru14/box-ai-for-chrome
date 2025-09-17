@@ -207,8 +207,12 @@ const setupChatUI = () => {
         displayMessage(request.message, 'assistant');
         break;
       case 'open_chat':
+        chrome.runtime.sendMessage({ type: 'chat_opened' });
         setMinimized(false); // Maximize
         chatContainer.style.display = 'flex';
+        break;
+      case 'clear_chat':
+        messagesContainer.innerHTML = ''; // Clear previous messages
         break;
     }
   });
