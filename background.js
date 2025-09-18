@@ -267,7 +267,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 
-chrome.tabs.onRemoved.addListener(async (tabId) => {
+async function cleanupTab(tabId, tab) {
   const { 
     BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false, 
     [tabId + '_uploadedFileId']: uploadedFileId 
@@ -279,8 +279,14 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
   if (deleteAfterCopy && uploadedFileId) {
     try {
       await boxClient.deleteFile(uploadedFileId);
+      if (tab) {
+        showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
+      }
     } catch (err) {
       console.error("Error deleting file from Box:", err);
+      if (tab) {
+        showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
+      }
     }
   }
 
@@ -291,6 +297,11 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
     tabId + '_currentModelConfig',
     tabId + '_uploadedFileId'
   ]);
+}
+
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  await cleanupTab(tabId, null);
 });
 
 
@@ -367,28 +378,5 @@ async function handleChatMessage(message, tab) {
 }
 
 async function handleChatClosed(tab) {
-  const { 
-    BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false, 
-    [tab.id + '_uploadedFileId']: uploadedFileId 
-  } = await chrome.storage.local.get([
-    'BOX__DELETE_FILE_AFTER_COPY',
-    tab.id + '_uploadedFileId'
-  ]);
-
-  if (deleteAfterCopy && uploadedFileId) {
-    try {
-      await boxClient.deleteFile(uploadedFileId);
-      showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
-    } catch (err) {
-      console.error("Error deleting file from Box:", err);
-      showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
-    }
-  }
-  // Reset conversation state
-  chrome.storage.local.remove([
-    tab.id + '_conversationHistory',
-    tab.id + '_currentTargetItems',
-    tab.id + '_currentModelConfig',
-    tab.id + '_uploadedFileId'
-  ]);
+  await cleanupTab(tab.id, tab);
 }
