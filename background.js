@@ -304,6 +304,14 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
   await cleanupTab(tabId, null);
 });
 
+chrome.windows.onRemoved.addListener(async (windowId) => {
+    chrome.tabs.query({ windowId: windowId }, async (tabs) => {
+        for (const tab of tabs) {
+            await cleanupTab(tab.id, null);
+        }
+    });
+});""
+
 
 function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig, targetItems) {
     const instruction = prompt('Enter your instruction for Box AI:');
