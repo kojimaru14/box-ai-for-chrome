@@ -2,6 +2,8 @@ import BOX from './utils/box.js';
 import { defaultCustomInstructions } from './settings/config.js';
 import { displayBanner } from './utils/banner.js';
 
+const TEMP_PREFIX = 'cache_';
+
 const boxClient = new BOX();
 
 /**
@@ -80,6 +82,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (sender.tab) {
                 chrome.tabs.sendMessage(sender.tab.id, { type: "clear_chat" });
             }
+            break;
+        case 'clear_cache':
+            chrome.storage.local.get(null, (items) => {
+                const tabIds = new Set();
+                Object.keys(items).forEach(key => {
+                    if (key.startsWith(TEMP_PREFIX)) {
+                        const tabId = parseInt(key.substring(TEMP_PREFIX.length));
+                        if (!isNaN(tabId)) {
+                            tabIds.add(tabId);
+                        }
+                    }
+                });
+                tabIds.forEach(tabId => {
+                    cleanupTab(tabId, null);
+                });
+            });
             break;
     }
 });
@@ -201,7 +219,7 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
             return console.error('Failed to upload file to Box');
         }
 
-        chrome.storage.local.set({ [tab.id + '_uploadedFileId']: fileId });
+        chrome.storage.local.set({ [TEMP_PREFIX + tab.id + '_uploadedFileId']: fileId });
 
         if (!finalTargetItems || finalTargetItems.length === 0) {
             finalTargetItems = [{ type: 'file', id: fileId }];
@@ -228,9 +246,9 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
     ];
 
     chrome.storage.local.set({
-        [tab.id + '_conversationHistory']: conversationHistory,
-        [tab.id + '_currentTargetItems']: finalTargetItems,
-        [tab.id + '_currentModelConfig']: modelConfig
+        [TEMP_PREFIX + tab.id + '_conversationHistory']: conversationHistory,
+        [TEMP_PREFIX + tab.id + '_currentTargetItems']: finalTargetItems,
+        [TEMP_PREFIX + tab.id + '_currentModelConfig']: modelConfig
     });
 
     chrome.tabs.sendMessage(tab.id, { 
@@ -270,10 +288,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
 async function cleanupTab(tabId, tab) {
   const { 
     BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false, 
-    [tabId + '_uploadedFileId']: uploadedFileId 
+    [TEMP_PREFIX + tabId + '_uploadedFileId']: uploadedFileId 
   } = await chrome.storage.local.get([
     'BOX__DELETE_FILE_AFTER_COPY',
-    tabId + '_uploadedFileId'
+    TEMP_PREFIX + tabId + '_uploadedFileId'
   ]);
 
   if (deleteAfterCopy && uploadedFileId) {
@@ -292,10 +310,10 @@ async function cleanupTab(tabId, tab) {
 
   // Clear the storage for the closed tab
   chrome.storage.local.remove([
-    tabId + '_conversationHistory',
-    tabId + '_currentTargetItems',
-    tabId + '_currentModelConfig',
-    tabId + '_uploadedFileId'
+    TEMP_PREFIX + tabId + '_conversationHistory',
+    TEMP_PREFIX + tabId + '_currentTargetItems',
+    TEMP_PREFIX + tabId + '_currentModelConfig',
+    TEMP_PREFIX + tabId + '_uploadedFileId'
   ]);
 }
 
@@ -339,13 +357,13 @@ chrome.action.onClicked.addListener((tab) => {
 
 async function handleChatMessage(message, tab) {
   const { 
-    [tab.id + '_conversationHistory']: conversationHistory = [], 
-    [tab.id + '_currentTargetItems']: currentTargetItems, 
-    [tab.id + '_currentModelConfig']: currentModelConfig 
+    [TEMP_PREFIX + tab.id + '_conversationHistory']: conversationHistory = [], 
+    [TEMP_PREFIX + tab.id + '_currentTargetItems']: currentTargetItems, 
+    [TEMP_PREFIX + tab.id + '_currentModelConfig']: currentModelConfig 
   } = await chrome.storage.local.get([
-    tab.id + '_conversationHistory',
-    tab.id + '_currentTargetItems',
-    tab.id + '_currentModelConfig'
+    TEMP_PREFIX + tab.id + '_conversationHistory',
+    TEMP_PREFIX + tab.id + '_currentTargetItems',
+    TEMP_PREFIX + tab.id + '_currentModelConfig'
   ]);
 
   if (!currentTargetItems) {
@@ -368,7 +386,7 @@ async function handleChatMessage(message, tab) {
         created_at: response.created_at || new Date().toISOString()
     }];
 
-    chrome.storage.local.set({ [tab.id + '_conversationHistory']: newConversationHistory });
+    chrome.storage.local.set({ [TEMP_PREFIX + tab.id + '_conversationHistory']: newConversationHistory });
 
     // Send the reply back to the content script
     chrome.tabs.sendMessage(tab.id, { 
