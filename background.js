@@ -31,9 +31,11 @@ function getFinalInstruction(instruction, selectionText, finalFileName) {
     return finalInstruction;
 }
 
-function initiateBoxAIQuery(instruction, selectionText, finalFileName, modelConfig, tab, targetItems) {
+async function initiateBoxAIQuery(instruction, selectionText, finalFileName, modelConfig, tab, targetItems) {
+    await cleanupTab(tab.id, tab);
     const finalInstruction = getFinalInstruction(instruction, selectionText, finalFileName);
 
+    chrome.tabs.sendMessage(tab.id, { type: "clear_chat" });
     // First, tell the content script to open chat and display the user's instruction
     chrome.tabs.sendMessage(tab.id, {
         type: "open_chat_with_thinking_indicator",
@@ -78,11 +80,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'chat_closed':
             handleChatClosed(sender.tab);
             return true;
-        case 'chat_opened':
-            if (sender.tab) {
-                chrome.tabs.sendMessage(sender.tab.id, { type: "clear_chat" });
-            }
-            break;
+        
         case 'clear_cache':
             chrome.storage.local.get(null, (items) => {
                 const tabIds = new Set();
@@ -350,7 +348,9 @@ function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, 
 }
 
 // When the user clicks on the extension action (toolbar icon).
-chrome.action.onClicked.addListener((tab) => {
+chrome.action.onClicked.addListener(async (tab) => {
+  await cleanupTab(tab.id, tab);
+  chrome.tabs.sendMessage(tab.id, { type: "clear_chat" });
   // Send a message to the active tab to open the chat window.
   chrome.tabs.sendMessage(tab.id, { type: "open_chat" });
 });
