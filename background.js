@@ -219,7 +219,10 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
             return console.error('Failed to upload file to Box');
         }
 
-        chrome.storage.local.set({ [TEMP_PREFIX + tab.id + '_uploadedFileId']: fileId });
+        const tabDataKey = TEMP_PREFIX + tab.id;
+        const existingTabData = (await chrome.storage.local.get(tabDataKey))[tabDataKey] || {};
+        const newTabData = { ...existingTabData, uploadedFileId: fileId };
+        chrome.storage.local.set({ [tabDataKey]: newTabData });
 
         if (!finalTargetItems || finalTargetItems.length === 0) {
             finalTargetItems = [{ type: 'file', id: fileId }];
@@ -234,6 +237,9 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
         }
     }
 
+    const tabDataKey = TEMP_PREFIX + tab.id;
+    const existingTabData = (await chrome.storage.local.get(tabDataKey))[tabDataKey] || {};
+
     const response = await handleBoxAIQuery(instructionQuery, finalTargetItems, modelConfig, tab, []);
     const aiReply = response.answer || "Failed to get response from Box AI.";
 
@@ -245,11 +251,15 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
         }
     ];
 
-    chrome.storage.local.set({
-        [TEMP_PREFIX + tab.id + '_conversationHistory']: conversationHistory,
-        [TEMP_PREFIX + tab.id + '_currentTargetItems']: finalTargetItems,
-        [TEMP_PREFIX + tab.id + '_currentModelConfig']: modelConfig
-    });
+    const newTabData = {
+        ...existingTabData,
+        conversationHistory,
+        currentTargetItems: finalTargetItems,
+        currentModelConfig: modelConfig,
+        uploadedFileId: fileId || existingTabData.uploadedFileId
+    };
+
+    chrome.storage.local.set({ [tabDataKey]: newTabData });
 
     chrome.tabs.sendMessage(tab.id, { 
         type: "receive_chat_message", 
@@ -286,35 +296,28 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 
 async function cleanupTab(tabId, tab) {
-  const { 
-    BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false, 
-    [TEMP_PREFIX + tabId + '_uploadedFileId']: uploadedFileId 
-  } = await chrome.storage.local.get([
-    'BOX__DELETE_FILE_AFTER_COPY',
-    TEMP_PREFIX + tabId + '_uploadedFileId'
-  ]);
+  const tabDataKey = TEMP_PREFIX + tabId;
+  const tabData = (await chrome.storage.local.get(tabDataKey))[tabDataKey];
 
-  if (deleteAfterCopy && uploadedFileId) {
-    try {
-      await boxClient.deleteFile(uploadedFileId);
-      if (tab) {
-        showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
-      }
-    } catch (err) {
-      console.error("Error deleting file from Box:", err);
-      if (tab) {
-        showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
-      }
+  if (tabData && tabData.uploadedFileId) {
+    const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } = await chrome.storage.local.get('BOX__DELETE_FILE_AFTER_COPY');
+    if (deleteAfterCopy) {
+        try {
+            await boxClient.deleteFile(tabData.uploadedFileId);
+            if (tab) {
+                showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
+            }
+        } catch (err) {
+            console.error("Error deleting file from Box:", err);
+            if (tab) {
+                showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
+            }
+        }
     }
   }
 
   // Clear the storage for the closed tab
-  chrome.storage.local.remove([
-    TEMP_PREFIX + tabId + '_conversationHistory',
-    TEMP_PREFIX + tabId + '_currentTargetItems',
-    TEMP_PREFIX + tabId + '_currentModelConfig',
-    TEMP_PREFIX + tabId + '_uploadedFileId'
-  ]);
+  chrome.storage.local.remove(tabDataKey);
 }
 
 
@@ -356,20 +359,15 @@ chrome.action.onClicked.addListener((tab) => {
 
 
 async function handleChatMessage(message, tab) {
-  const { 
-    [TEMP_PREFIX + tab.id + '_conversationHistory']: conversationHistory = [], 
-    [TEMP_PREFIX + tab.id + '_currentTargetItems']: currentTargetItems, 
-    [TEMP_PREFIX + tab.id + '_currentModelConfig']: currentModelConfig 
-  } = await chrome.storage.local.get([
-    TEMP_PREFIX + tab.id + '_conversationHistory',
-    TEMP_PREFIX + tab.id + '_currentTargetItems',
-    TEMP_PREFIX + tab.id + '_currentModelConfig'
-  ]);
+  const tabDataKey = TEMP_PREFIX + tab.id;
+  const tabData = (await chrome.storage.local.get(tabDataKey))[tabDataKey];
 
-  if (!currentTargetItems) {
+  if (!tabData || !tabData.currentTargetItems) {
     showBannerInTab(tab.id, "Please start a new query from a selection first.", "info");
     return;
   }
+
+  const { conversationHistory, currentTargetItems, currentModelConfig } = tabData;
 
   const userPrompt = message;
 
@@ -386,7 +384,8 @@ async function handleChatMessage(message, tab) {
         created_at: response.created_at || new Date().toISOString()
     }];
 
-    chrome.storage.local.set({ [TEMP_PREFIX + tab.id + '_conversationHistory']: newConversationHistory });
+    const newTabData = { ...tabData, conversationHistory: newConversationHistory };
+    chrome.storage.local.set({ [tabDataKey]: newTabData });
 
     // Send the reply back to the content script
     chrome.tabs.sendMessage(tab.id, { 
