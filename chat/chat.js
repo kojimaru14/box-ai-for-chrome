@@ -197,7 +197,6 @@ const setupChatUI = () => {
     console.log('Received message in chat.js:', request);
     switch (request.type) {
       case 'open_chat_with_thinking_indicator':
-        messagesContainer.innerHTML = ''; // Clear previous messages
         displayMessage(request.instruction, 'user');
         displayMessage('Thinking...', 'assistant', true);
         setMinimized(false); // Maximize
@@ -209,6 +208,9 @@ const setupChatUI = () => {
       case 'open_chat':
         setMinimized(false); // Maximize
         chatContainer.style.display = 'flex';
+        break;
+      case 'clear_chat':
+        messagesContainer.innerHTML = ''; // Clear previous messages
         break;
     }
   });

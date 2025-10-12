@@ -1,0 +1,21 @@
+body {
+  width: 200px;
+  padding: 10px;
+  font-family: sans-serif;
+}
+
+.menu {
+  display: flex;
+  justify-content: space-around;
+}
+
+button {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #f0f0f0;
+}

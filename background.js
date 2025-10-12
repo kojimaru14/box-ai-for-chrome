@@ -2,6 +2,8 @@ import BOX from './utils/box.js';
 import { defaultCustomInstructions } from './settings/config.js';
 import { displayBanner } from './utils/banner.js';
 
+const TEMP_PREFIX = 'cache_';
+
 const boxClient = new BOX();
 
 /**
@@ -29,9 +31,11 @@ function getFinalInstruction(instruction, selectionText, finalFileName) {
     return finalInstruction;
 }
 
-function initiateBoxAIQuery(instruction, selectionText, finalFileName, modelConfig, tab, targetItems) {
+async function initiateBoxAIQuery(instruction, selectionText, finalFileName, modelConfig, tab, targetItems) {
+    await cleanupTab(tab.id, tab);
     const finalInstruction = getFinalInstruction(instruction, selectionText, finalFileName);
 
+    chrome.tabs.sendMessage(tab.id, { type: "clear_chat" });
     // First, tell the content script to open chat and display the user's instruction
     chrome.tabs.sendMessage(tab.id, {
         type: "open_chat_with_thinking_indicator",
@@ -76,6 +80,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'chat_closed':
             handleChatClosed(sender.tab);
             return true;
+        
+        case 'clear_cache':
+            chrome.storage.local.get(null, (items) => {
+                const tabIds = new Set();
+                Object.keys(items).forEach(key => {
+                    if (key.startsWith(TEMP_PREFIX)) {
+                        const tabId = parseInt(key.substring(TEMP_PREFIX.length));
+                        if (!isNaN(tabId)) {
+                            tabIds.add(tabId);
+                        }
+                    }
+                });
+                tabIds.forEach(tabId => {
+                    cleanupTab(tabId, null);
+                });
+            });
+            break;
     }
 });
 
@@ -196,7 +217,10 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
             return console.error('Failed to upload file to Box');
         }
 
-        uploadedFileId = fileId;
+        const tabDataKey = TEMP_PREFIX + tab.id;
+        const existingTabData = (await chrome.storage.local.get(tabDataKey))[tabDataKey] || {};
+        const newTabData = { ...existingTabData, uploadedFileId: fileId };
+        chrome.storage.local.set({ [tabDataKey]: newTabData });
 
         if (!finalTargetItems || finalTargetItems.length === 0) {
             finalTargetItems = [{ type: 'file', id: fileId }];
@@ -211,18 +235,29 @@ async function processInitialBoxAIQuery(fileName, text, instructionQuery, modelC
         }
     }
 
-    currentModelConfig = modelConfig; // Store the modelConfig for subsequent chat messages
-    currentTargetItems = finalTargetItems; // Store targetItems for subsequent chat messages
+    const tabDataKey = TEMP_PREFIX + tab.id;
+    const existingTabData = (await chrome.storage.local.get(tabDataKey))[tabDataKey] || {};
+
     const response = await handleBoxAIQuery(instructionQuery, finalTargetItems, modelConfig, tab, []);
     const aiReply = response.answer || "Failed to get response from Box AI.";
 
-    conversationHistory = [
+    const conversationHistory = [
         {
             prompt: instructionQuery,
             answer: aiReply,
             created_at: response.created_at || new Date().toISOString()
         }
     ];
+
+    const newTabData = {
+        ...existingTabData,
+        conversationHistory,
+        currentTargetItems: finalTargetItems,
+        currentModelConfig: modelConfig,
+        uploadedFileId: fileId || existingTabData.uploadedFileId
+    };
+
+    chrome.storage.local.set({ [tabDataKey]: newTabData });
 
     chrome.tabs.sendMessage(tab.id, { 
         type: "receive_chat_message", 
@@ -258,6 +293,45 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 
+async function cleanupTab(tabId, tab) {
+  const tabDataKey = TEMP_PREFIX + tabId;
+  const tabData = (await chrome.storage.local.get(tabDataKey))[tabDataKey];
+
+  if (tabData && tabData.uploadedFileId) {
+    const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } = await chrome.storage.local.get('BOX__DELETE_FILE_AFTER_COPY');
+    if (deleteAfterCopy) {
+        try {
+            await boxClient.deleteFile(tabData.uploadedFileId);
+            if (tab) {
+                showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
+            }
+        } catch (err) {
+            console.error("Error deleting file from Box:", err);
+            if (tab) {
+                showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
+            }
+        }
+    }
+  }
+
+  // Clear the storage for the closed tab
+  chrome.storage.local.remove(tabDataKey);
+}
+
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  await cleanupTab(tabId, null);
+});
+
+chrome.windows.onRemoved.addListener(async (windowId) => {
+    chrome.tabs.query({ windowId: windowId }, async (tabs) => {
+        for (const tab of tabs) {
+            await cleanupTab(tab.id, null);
+        }
+    });
+});""
+
+
 function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig, targetItems) {
     const instruction = prompt('Enter your instruction for Box AI:');
     if (!instruction) {
@@ -274,23 +348,26 @@ function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, 
 }
 
 // When the user clicks on the extension action (toolbar icon).
-chrome.action.onClicked.addListener((tab) => {
+chrome.action.onClicked.addListener(async (tab) => {
+  await cleanupTab(tab.id, tab);
+  chrome.tabs.sendMessage(tab.id, { type: "clear_chat" });
   // Send a message to the active tab to open the chat window.
   chrome.tabs.sendMessage(tab.id, { type: "open_chat" });
 });
 
 // --- Chat Functionality ---
-let conversationHistory = [];
-let currentTargetItems = null; // To keep track of targetItems if no file was uploaded
-let currentModelConfig = null; // To keep track of the model config in conversation
-let uploadedFileId = null; // To keep track of the uploaded file in conversation
 
 
 async function handleChatMessage(message, tab) {
-  if (!currentTargetItems) {
+  const tabDataKey = TEMP_PREFIX + tab.id;
+  const tabData = (await chrome.storage.local.get(tabDataKey))[tabDataKey];
+
+  if (!tabData || !tabData.currentTargetItems) {
     showBannerInTab(tab.id, "Please start a new query from a selection first.", "info");
     return;
   }
+
+  const { conversationHistory, currentTargetItems, currentModelConfig } = tabData;
 
   const userPrompt = message;
 
@@ -301,11 +378,14 @@ async function handleChatMessage(message, tab) {
     const aiReply = response.answer || 'Sorry, I couldn\'t get a response.';
 
     // Add the new, complete exchange to the history.
-    conversationHistory.push({
+    const newConversationHistory = [...conversationHistory, {
         prompt: userPrompt,
         answer: aiReply,
         created_at: response.created_at || new Date().toISOString()
-    });
+    }];
+
+    const newTabData = { ...tabData, conversationHistory: newConversationHistory };
+    chrome.storage.local.set({ [tabDataKey]: newTabData });
 
     // Send the reply back to the content script
     chrome.tabs.sendMessage(tab.id, { 
@@ -323,23 +403,5 @@ async function handleChatMessage(message, tab) {
 }
 
 async function handleChatClosed(tab) {
-  if (!currentTargetItems) return;
-
-  const { BOX__DELETE_FILE_AFTER_COPY: deleteAfterCopy = false } =
-    await chrome.storage.local.get({ BOX__DELETE_FILE_AFTER_COPY: false });
-
-  if (deleteAfterCopy && uploadedFileId) {
-    try {
-      await boxClient.deleteFile(uploadedFileId);
-      showBannerInTab(tab.id, "Uploaded file deleted from Box.", "info");
-    } catch (err) {
-      console.error("Error deleting file from Box:", err);
-      showBannerInTab(tab.id, "Failed to delete file from Box.", "error");
-    }
-  }
-  // Reset conversation state
-  conversationHistory = [];
-  currentTargetItems = null;
-  currentModelConfig = null;
-  uploadedFileId = null;
+  await cleanupTab(tab.id, tab);
 }
