@@ -114,7 +114,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     function: promptForCustomInstructionAndSendMessage,
-                    args: [info.selectionText, finalFileName, item.modelConfig, item.targetItems ? JSON.parse(JSON.stringify(item.targetItems)) : null]
+                    args: [info.selectionText, finalFileName, item.modelConfig ? JSON.parse(JSON.stringify(item.modelConfig)) : null, item.targetItems ? JSON.parse(JSON.stringify(item.targetItems)) : null]
                 });
             } else {
                 // Case 2: Pre-defined instruction
