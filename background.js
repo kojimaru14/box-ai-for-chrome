@@ -1,6 +1,9 @@
 import BOX from './utils/box.js';
 import { defaultCustomInstructions } from './settings/config.js';
 import { displayBanner } from './utils/banner.js';
+import { applyToolbarIndicators } from './utils/dev-mode.js';
+
+applyToolbarIndicators();
 
 const TEMP_PREFIX = 'cache_';
 
@@ -329,7 +332,7 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
             await cleanupTab(tab.id, null);
         }
     });
-});""
+});
 
 
 function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig, targetItems) {
