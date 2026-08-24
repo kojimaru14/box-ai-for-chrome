@@ -1,0 +1,73 @@
+.changelog-nav {
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+.changelog-nav a {
+  color: #1877f2;
+  text-decoration: none;
+}
+
+.changelog-nav a:hover {
+  text-decoration: underline;
+}
+
+.changelog-body h1 {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.changelog-body h2 {
+  font-size: 18px;
+  color: #1c1e21;
+  margin-top: 28px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #dddfe2;
+}
+
+.changelog-body h3 {
+  font-size: 15px;
+  color: #606770;
+  margin-top: 16px;
+  margin-bottom: 6px;
+}
+
+.changelog-body p {
+  font-size: 14px;
+  color: #606770;
+  line-height: 1.55;
+  margin: 8px 0;
+}
+
+.changelog-body ul {
+  margin: 6px 0 10px;
+  padding-left: 1.4em;
+}
+
+.changelog-body li {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 4px 0;
+  color: #1c1e21;
+}
+
+.changelog-body a {
+  color: #1877f2;
+  text-decoration: none;
+}
+
+.changelog-body a:hover {
+  text-decoration: underline;
+}
+
+.changelog-body code {
+  background: #f2f3f5;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.changelog-body .changelog-error {
+  color: #c0392b;
+}

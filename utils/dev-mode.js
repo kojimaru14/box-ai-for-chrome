@@ -75,6 +75,13 @@ const injectStyles = () => {
     .box-ai-version-info--options {
       margin: -20px 0 24px;
     }
+    .box-ai-version-info a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .box-ai-version-info a:hover {
+      text-decoration: underline;
+    }
   `;
   document.head.appendChild(style);
 };
@@ -97,13 +104,16 @@ export const applyExtensionPageUi = () => {
   }
 
   if (document.getElementById('box-ai-version-label')) return;
-  const heading = document.querySelector('.container > h1');
+  const heading = document.querySelector('.container h1');
   if (!heading) return;
 
   const label = document.createElement('p');
   label.id = 'box-ai-version-label';
   label.className = 'box-ai-version-info box-ai-version-info--options';
-  label.textContent = formatVersion(info);
+  const link = document.createElement('a');
+  link.href = 'changelog.html';
+  link.textContent = formatVersion(info);
+  label.appendChild(link);
   heading.insertAdjacentElement('afterend', label);
 };
 

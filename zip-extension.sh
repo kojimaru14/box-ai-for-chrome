@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # Script to create a ZIP package of the Chrome extension for publishing.
-# Excludes unnecessary files like .git, markdown files, and this script itself.
+# Excludes unnecessary files like .git, README/PrivacyPolicy markdown, and this script itself.
+# Changelog.md is included so it can be opened from the Options page.
 
 # Extract name and version from manifest.json for default output filename
 VERSION=$(grep -Po '"version"\s*:\s*"\K[^"]+' manifest.json)
@@ -21,7 +22,8 @@ EXCLUDE_PATTERNS=(
   ".git/*"
   ".gitignore"
   ".gitattributes"
-  "*.md"
+  "README.md"
+  "PrivacyPolicy.md"
   "*.zip"
   "zip-extension.sh"
 )

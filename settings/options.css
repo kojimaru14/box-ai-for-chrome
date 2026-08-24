@@ -234,3 +234,18 @@ button:hover {
 .tooltip-inner {
   text-align: left; /* Ensure text aligns left within the wider tooltip */
 }
+
+.options-footer {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.options-footer a {
+  color: #1877f2;
+  text-decoration: none;
+}
+
+.options-footer a:hover {
+  text-decoration: underline;
+}
