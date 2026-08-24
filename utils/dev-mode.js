@@ -26,17 +26,22 @@ const injectStyles = () => {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-    html.box-ai-dev-mode body > .container > h1,
-    html.box-ai-dev-mode body > h1 {
-      margin-top: 0;
-    }
     .box-ai-dev-mode-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      box-sizing: border-box;
       background-color: ${DEV_COLOR};
       color: white;
       padding: 6px 12px;
       font-size: 0.85em;
       font-weight: bold;
       text-align: center;
+    }
+    html.box-ai-dev-mode body {
+      padding-top: calc(20px + 2.1em);
     }
     .box-ai-dev-mode-overlay {
       position: fixed;
