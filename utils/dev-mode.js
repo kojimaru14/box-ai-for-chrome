@@ -1,12 +1,10 @@
 /**
- * Detects whether this extension is a development (unpacked) or store install,
- * and applies UI indicators accordingly.
+ * Dev/store build detection and UI for extension pages and the service worker.
+ * Content-script indicators (page overlay, chat header) live in dev-mode-content.js.
  */
 const STYLE_ID = 'box-ai-dev-mode-styles';
-const OVERLAY_ID = 'box-ai-dev-mode-overlay';
 const BANNER_ID = 'box-ai-dev-mode-banner';
 const DEV_COLOR = '#e67e22';
-const CHAT_HEADER_WATCH_MS = 30000;
 
 export const isDevelopment = () => !('update_url' in chrome.runtime.getManifest());
 
@@ -49,22 +47,6 @@ const injectStyles = () => {
     }
     html.box-ai-dev-mode body {
       padding-top: calc(20px + 2.1em);
-    }
-    .box-ai-dev-mode-overlay {
-      position: fixed;
-      bottom: 8px;
-      right: 8px;
-      z-index: 2147483647;
-      pointer-events: none;
-      background-color: ${DEV_COLOR};
-      color: white;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 11px;
-      font-weight: bold;
-      padding: 4px 8px;
-      border-radius: 4px;
-      opacity: 0.92;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     }
     .box-ai-dev-mode-popup-banner {
       background-color: ${DEV_COLOR};
@@ -145,67 +127,6 @@ export const applyPopupUi = (container) => {
   }
 };
 
-export const applyPageOverlay = () => {
-  if (!isDevelopment() || window !== window.top) return;
-  if (document.getElementById(OVERLAY_ID)) return;
-
-  const mount = () => {
-    if (document.getElementById(OVERLAY_ID)) return;
-    if (!document.body) return;
-
-    injectStyles();
-    const info = getInfo();
-    const overlay = document.createElement('div');
-    overlay.id = OVERLAY_ID;
-    overlay.className = 'box-ai-dev-mode-overlay';
-    overlay.textContent = `DEV · Box AI v${info.version}`;
-    document.body.appendChild(overlay);
-  };
-
-  if (document.body) {
-    mount();
-  } else {
-    document.addEventListener('DOMContentLoaded', mount, { once: true });
-  }
-};
-
-export const applyChatHeaderIndicator = () => {
-  if (!isDevelopment()) return;
-
-  const apply = () => {
-    const header = document.getElementById('box-ai-chat-header');
-    if (!header) return false;
-    injectStyles();
-    header.classList.add('box-ai-dev-mode-header');
-    return true;
-  };
-
-  if (apply()) return;
-
-  let timeoutId;
-  const observer = new MutationObserver(() => {
-    if (apply()) cleanup();
-  });
-
-  const cleanup = () => {
-    observer.disconnect();
-    clearTimeout(timeoutId);
-  };
-
-  timeoutId = setTimeout(cleanup, CHAT_HEADER_WATCH_MS);
-
-  const startObserving = () => {
-    if (!document.body) return;
-    observer.observe(document.body, { childList: true });
-  };
-
-  if (document.body) {
-    startObserving();
-  } else {
-    document.addEventListener('DOMContentLoaded', startObserving, { once: true });
-  }
-};
-
 export const applyToolbarIndicators = () => {
   const info = getInfo();
   chrome.action.setTitle({ title: formatTooltipTitle(info) });
@@ -227,8 +148,6 @@ const BoxAiDevMode = {
   formatTooltipTitle,
   applyExtensionPageUi,
   applyPopupUi,
-  applyPageOverlay,
-  applyChatHeaderIndicator,
   applyToolbarIndicators,
 };
 
