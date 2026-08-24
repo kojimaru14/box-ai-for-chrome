@@ -1,5 +1,3 @@
-const { createSvgIcon, icons } = window.BoxExtensionIcons;
-
 /**
  * Creates a "Copy to Clipboard" button for a message.
  * @param {string} message - The text to be copied.
@@ -27,6 +25,13 @@ const createCopyButton = (message) => {
  * Initializes the entire chat UI and its functionalities.
  */
 const setupChatUI = () => {
+  if (!window.BoxExtensionIcons) {
+    setTimeout(setupChatUI, 100);
+    return;
+  }
+
+  const { createSvgIcon, icons } = window.BoxExtensionIcons;
+
   const chatContainer = document.getElementById('box-ai-chat-container');
   if (!chatContainer) {
     setTimeout(setupChatUI, 100); // Retry if the container isn't ready
