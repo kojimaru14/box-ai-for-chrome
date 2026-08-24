@@ -5,6 +5,10 @@ import { applyToolbarIndicators } from './utils/dev-mode.js';
 
 applyToolbarIndicators();
 
+chrome.runtime.onInstalled.addListener(() => {
+  applyToolbarIndicators();
+});
+
 const TEMP_PREFIX = 'cache_';
 
 const boxClient = new BOX();

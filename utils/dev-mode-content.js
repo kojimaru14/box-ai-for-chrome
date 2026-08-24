@@ -7,6 +7,7 @@ const BoxAiDevModeContent = (function() {
   const STYLE_ID = 'box-ai-dev-mode-styles';
   const OVERLAY_ID = 'box-ai-dev-mode-overlay';
   const DEV_COLOR = '#e67e22';
+  const CHAT_HEADER_WATCH_MS = 30000;
 
   const isDevelopment = () => !('update_url' in chrome.runtime.getManifest());
 
@@ -73,17 +74,34 @@ const BoxAiDevModeContent = (function() {
     const apply = () => {
       const header = document.getElementById('box-ai-chat-header');
       if (!header) return false;
-      injectStyles();
       header.classList.add('box-ai-dev-mode-header');
       return true;
     };
 
     if (apply()) return;
 
+    let timeoutId;
     const observer = new MutationObserver(() => {
-      if (apply()) observer.disconnect();
+      if (apply()) cleanup();
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+
+    const cleanup = () => {
+      observer.disconnect();
+      clearTimeout(timeoutId);
+    };
+
+    timeoutId = setTimeout(cleanup, CHAT_HEADER_WATCH_MS);
+
+    const startObserving = () => {
+      if (!document.body) return;
+      observer.observe(document.body, { childList: true });
+    };
+
+    if (document.body) {
+      startObserving();
+    } else {
+      document.addEventListener('DOMContentLoaded', startObserving, { once: true });
+    }
   };
 
   applyPageOverlay();
