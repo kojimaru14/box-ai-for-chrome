@@ -11,6 +11,10 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - Changelog, viewable from the Options page.
 
+### Changed
+
+- Extension files live in `extension/`. Load that folder as an unpacked extension.
+
 ## [1.1.9] - 2026-08-25
 
 ### Added

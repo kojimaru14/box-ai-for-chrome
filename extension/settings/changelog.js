@@ -62,7 +62,7 @@ function renderMarkdown(markdown) {
 async function loadChangelog() {
   const el = document.getElementById('changelog-content');
   try {
-    const response = await fetch(chrome.runtime.getURL('Changelog.md'));
+    const response = await fetch(chrome.runtime.getURL('CHANGELOG.md'));
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
