@@ -1,3 +1,7 @@
+import { applyPopupUi } from '../utils/dev-mode.js';
+
+applyPopupUi(document.getElementById('build-info'));
+
 function isExtensionContextValid() {
   return typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
 }

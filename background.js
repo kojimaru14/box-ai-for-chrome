@@ -1,6 +1,13 @@
 import BOX from './utils/box.js';
 import { defaultCustomInstructions } from './settings/config.js';
 import { displayBanner } from './utils/banner.js';
+import { applyToolbarIndicators } from './utils/dev-mode.js';
+
+applyToolbarIndicators();
+
+chrome.runtime.onInstalled.addListener(() => {
+  applyToolbarIndicators();
+});
 
 const TEMP_PREFIX = 'cache_';
 
@@ -329,7 +336,7 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
             await cleanupTab(tab.id, null);
         }
     });
-});""
+});
 
 
 function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, modelConfig, targetItems) {
@@ -347,15 +354,9 @@ function promptForCustomInstructionAndSendMessage(selectionText, finalFileName, 
     });
 }
 
-// When the user clicks on the extension action (toolbar icon).
-chrome.action.onClicked.addListener(async (tab) => {
-  await cleanupTab(tab.id, tab);
-  chrome.tabs.sendMessage(tab.id, { type: "clear_chat" });
-  // Send a message to the active tab to open the chat window.
-  chrome.tabs.sendMessage(tab.id, { type: "open_chat" });
-});
-
 // --- Chat Functionality ---
+// Note: chrome.action.onClicked is not used because default_popup is set in
+// manifest.json; toolbar clicks open the popup instead.
 
 
 async function handleChatMessage(message, tab) {

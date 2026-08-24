@@ -74,13 +74,14 @@ Before using the extension, you must set up your Box API credentials and authori
 
 ## Development
 - Built with [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/) and plain JavaScript.
+- **Development vs Chrome Web Store builds:** If you install both an unpacked (development) build and the Chrome Web Store build, the extension detects the install type automatically. Unpacked builds lack `update_url` in `manifest.json`; Store builds include it. In development builds only, you will see a **DEV** badge on the toolbar icon, a banner on the Options page, build info in the popup, a small overlay on web pages (`DEV · Box AI v…`), and a **DEV** badge on the chat header. All builds show the version (`v…`) in the popup, Options page, and toolbar tooltip. See `utils/dev-mode.js` (extension pages and service worker) and `utils/dev-mode-content.js` (content scripts).
 - Key components:
   - `manifest.json`: Extension metadata and permissions.
   - `background.js`: Service worker handling context menus, Box API calls, and messaging.
   - `content.js`: Content script for banners and clipboard operations.
   - `popup/`: Popup UI for opening Options.
   - `settings/`: Options page UI and default configuration.
-  - `utils/`: Shared utility scripts, including the Box API wrapper (`box.js`) and banner notifications (`banner.js`).
+  - `utils/`: Shared utility scripts, including the Box API wrapper (`box.js`), banner notifications (`banner.js`), and dev/store build indicators (`dev-mode.js`, `dev-mode-content.js`).
   - `vendor/`: Third-party libraries like Bootstrap and Box UI Elements.
   - `zip-extension.sh`: Script for creating a ZIP package (for Chrome Web Store upload). Usage: run this at the root of the repository
       ```bash

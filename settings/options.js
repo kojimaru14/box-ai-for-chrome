@@ -1,7 +1,10 @@
 import { defaultCustomInstructions, ALLOWED_DOMAINS } from './config.js';
 import BOX from '../utils/box.js';
 import { displayBanner } from '../utils/banner.js';
+import { applyExtensionPageUi } from '../utils/dev-mode.js';
 import '../vendor/box-ui-elements/picker.js';
+
+applyExtensionPageUi();
 
 // Load available AI models for selection
 let models = [];
