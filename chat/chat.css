@@ -98,8 +98,10 @@
   background-color: #f1f1f1;
   border-bottom: 1px solid #ccc;
   display: flex;
+  flex-wrap: nowrap;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   cursor: move;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
@@ -107,6 +109,42 @@
 
 #box-ai-chat-header span {
   font-weight: bold;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#box-ai-chat-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+}
+
+#box-ai-chat-header.box-ai-dev-mode-header {
+  background: linear-gradient(90deg, #e67e22, #d35400);
+  color: #fff;
+}
+
+#box-ai-chat-header.box-ai-dev-mode-header span::after {
+  content: "DEV";
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 0.65em;
+  font-weight: bold;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+#box-ai-chat-header.box-ai-dev-mode-header #box-ai-chat-actions button {
+  color: #fff;
 }
 
 #box-ai-chat-actions button {

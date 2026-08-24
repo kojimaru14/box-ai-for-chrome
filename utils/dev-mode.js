@@ -81,14 +81,6 @@ const injectStyles = () => {
       text-align: center;
       margin-bottom: 10px;
     }
-    #box-ai-chat-header.box-ai-dev-mode-header {
-      background: linear-gradient(90deg, ${DEV_COLOR}, #d35400) !important;
-    }
-    #box-ai-chat-header.box-ai-dev-mode-header span::after {
-      content: " [DEV]";
-      font-size: 0.85em;
-      opacity: 0.95;
-    }
   `;
   document.head.appendChild(style);
 };

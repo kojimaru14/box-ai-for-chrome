@@ -39,14 +39,6 @@ const BoxAiDevModeContent = (function() {
         opacity: 0.92;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
       }
-      #box-ai-chat-header.box-ai-dev-mode-header {
-        background: linear-gradient(90deg, ${DEV_COLOR}, #d35400) !important;
-      }
-      #box-ai-chat-header.box-ai-dev-mode-header span::after {
-        content: " [DEV]";
-        font-size: 0.85em;
-        opacity: 0.95;
-      }
     `;
     document.head.appendChild(style);
   };
