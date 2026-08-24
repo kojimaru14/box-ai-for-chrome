@@ -210,10 +210,6 @@ const setupChatUI = () => {
       case 'receive_chat_message':
         displayMessage(request.message, 'assistant');
         break;
-      case 'open_chat':
-        setMinimized(false); // Maximize
-        chatContainer.style.display = 'flex';
-        break;
       case 'clear_chat':
         messagesContainer.innerHTML = ''; // Clear previous messages
         break;
