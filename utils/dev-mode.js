@@ -16,10 +16,16 @@ export const getInfo = () => {
     name: manifest.name,
     version: manifest.version,
     channel: dev ? 'development' : 'store',
-    channelLabel: dev ? 'Development (unpacked)' : 'Chrome Web Store',
     isDevelopment: dev,
   };
 };
+
+export const formatVersion = (info) => `v${info.version}`;
+
+export const formatTooltipTitle = (info) =>
+  info.isDevelopment
+    ? `${info.name} [DEV] · ${formatVersion(info)}`
+    : `${info.name} · ${formatVersion(info)}`;
 
 const injectStyles = () => {
   if (document.getElementById(STYLE_ID)) return;
@@ -75,11 +81,16 @@ const injectStyles = () => {
       font-weight: normal;
       opacity: 0.95;
     }
-    .box-ai-dev-mode-store-info {
+    .box-ai-version-info {
       color: #666;
-      font-size: 11px;
+      font-size: 12px;
       text-align: center;
+    }
+    .box-ai-version-info--popup {
       margin-bottom: 10px;
+    }
+    .box-ai-version-info--options {
+      margin: -20px 0 24px;
     }
   `;
   document.head.appendChild(style);
@@ -89,17 +100,28 @@ export const applyExtensionPageUi = () => {
   const info = getInfo();
   document.documentElement.classList.toggle('box-ai-dev-mode', info.isDevelopment);
 
-  if (!info.isDevelopment) return;
-
   injectStyles();
 
-  if (!document.getElementById(BANNER_ID)) {
-    const banner = document.createElement('div');
-    banner.id = BANNER_ID;
-    banner.className = 'box-ai-dev-mode-banner';
-    banner.textContent = `Development build (unpacked) — v${info.version}`;
-    document.body.insertBefore(banner, document.body.firstChild);
+  if (info.isDevelopment) {
+    if (!document.getElementById(BANNER_ID)) {
+      const banner = document.createElement('div');
+      banner.id = BANNER_ID;
+      banner.className = 'box-ai-dev-mode-banner';
+      banner.textContent = `Development build · ${formatVersion(info)}`;
+      document.body.insertBefore(banner, document.body.firstChild);
+    }
+    return;
   }
+
+  if (document.getElementById('box-ai-version-label')) return;
+  const heading = document.querySelector('.container > h1');
+  if (!heading) return;
+
+  const label = document.createElement('p');
+  label.id = 'box-ai-version-label';
+  label.className = 'box-ai-version-info box-ai-version-info--options';
+  label.textContent = formatVersion(info);
+  heading.insertAdjacentElement('afterend', label);
 };
 
 export const applyPopupUi = (container) => {
@@ -112,14 +134,12 @@ export const applyPopupUi = (container) => {
     container.innerHTML = `
       <div class="box-ai-dev-mode-popup-banner">
         <div class="channel">Development Build</div>
-        <div class="version">v${info.version} · unpacked install</div>
+        <div class="version">${formatVersion(info)}</div>
       </div>
     `;
   } else {
     container.innerHTML = `
-      <div class="box-ai-dev-mode-store-info">
-        Chrome Web Store · v${info.version}
-      </div>
+      <div class="box-ai-version-info box-ai-version-info--popup">${formatVersion(info)}</div>
     `;
   }
 };
@@ -169,21 +189,23 @@ export const applyChatHeaderIndicator = () => {
 
 export const applyToolbarIndicators = () => {
   const info = getInfo();
+  chrome.action.setTitle({ title: formatTooltipTitle(info) });
+
   if (info.isDevelopment) {
     chrome.action.setBadgeText({ text: 'DEV' });
     chrome.action.setBadgeBackgroundColor({ color: DEV_COLOR });
-    chrome.action.setTitle({ title: `${info.name} [DEV] · v${info.version}` });
     console.log('[Box AI for Chrome] Development build (unpacked)');
     console.log(`version: ${info.version}`);
   } else {
     chrome.action.setBadgeText({ text: '' });
-    chrome.action.setTitle({ title: `${info.name} · v${info.version}` });
   }
 };
 
 const BoxAiDevMode = {
   isDevelopment,
   getInfo,
+  formatVersion,
+  formatTooltipTitle,
   applyExtensionPageUi,
   applyPopupUi,
   applyPageOverlay,

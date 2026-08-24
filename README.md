@@ -74,7 +74,7 @@ Before using the extension, you must set up your Box API credentials and authori
 
 ## Development
 - Built with [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/) and plain JavaScript.
-- **Development vs Chrome Web Store builds:** If you install both an unpacked (development) build and the Chrome Web Store build, the extension detects the install type automatically. Unpacked builds lack `update_url` in `manifest.json`; Store builds include it. In development builds only, you will see a **DEV** badge on the toolbar icon, a banner on the Options page, build info in the popup, a small overlay on web pages (`DEV · Box AI v…`), and a **DEV** badge on the chat header. Store builds show version info in the popup but no DEV indicators. See `utils/dev-mode.js` (extension pages and service worker) and `utils/dev-mode-content.js` (content scripts).
+- **Development vs Chrome Web Store builds:** If you install both an unpacked (development) build and the Chrome Web Store build, the extension detects the install type automatically. Unpacked builds lack `update_url` in `manifest.json`; Store builds include it. In development builds only, you will see a **DEV** badge on the toolbar icon, a banner on the Options page, build info in the popup, a small overlay on web pages (`DEV · Box AI v…`), and a **DEV** badge on the chat header. All builds show the version (`v…`) in the popup, Options page, and toolbar tooltip. See `utils/dev-mode.js` (extension pages and service worker) and `utils/dev-mode-content.js` (content scripts).
 - Key components:
   - `manifest.json`: Extension metadata and permissions.
   - `background.js`: Service worker handling context menus, Box API calls, and messaging.
